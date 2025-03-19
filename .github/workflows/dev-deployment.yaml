@@ -33,7 +33,7 @@ jobs:
           mvn clean package -DskipTests
       - name: Build docker image
         run: |
-          docker build -f src/main/docker/Dockerfile.native -t vertx/laxnit-backend-auth:latest .
+          docker build -f src/main/docker/Dockerfile.native -t vertx/mouv-core:latest .
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
@@ -41,13 +41,13 @@ jobs:
           password: ${{ secrets.REGISTRY_PASSWORD }}
       - name: Tag docker image
         run: |
-          docker tag vertx/laxnit-backend-auth:latest dkdenno/laxnit-backend-auth:latest
+          docker tag vertx/mouv-core:latest dkdenno/mouv-core:latest
       - name: Push to registry
         run: |
-          docker push dkdenno/laxnit-backend-auth:latest
+          docker push dkdenno/mouv-core:latest
 
 # docker stop laxnit_auth_dev; docker rm laxnit_auth_dev; sudo docker system prune -a
-# docker run -d --name laxnit_auth_dev --restart unless-stopped -p 8447:8447 --env-file /opt/envars/laxnit_dev.env dkdenno/laxnit-backend-auth:latest
+# docker run -d --name laxnit_auth_dev --restart unless-stopped -p 8447:8447 --env-file /opt/envars/laxnit_dev.env dkdenno/mouv-core:latest
 
 
-# docker run -d --name laxnit_auth_dev --restart unless-stopped -p 8080:8080 -p 7000:7000 --env-file .env vertx/laxnit-backend-auth:latest
+# docker run -d --name laxnit_auth_dev --restart unless-stopped -p 8080:8080 -p 7000:7000 --env-file .env vertx/mouv-core:latest
