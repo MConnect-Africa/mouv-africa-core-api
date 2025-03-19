@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package user;
+
+import "google/protobuf/empty.proto";
+
+option java_multiple_files = true;
+option java_package = "org.core.backend";
+option java_outer_classname = "UserServiceProto";
+
+message User {
+    string _id = 1;
+    string firstName = 2;
+    string postalAddress = 3;
+    string telephone1 = 4;
+    string telephone2 = 5;
+    string username = 6;
+    string lastName = 7;
+    string email = 8;
+    string organisationId = 9;
+    string uid = 10;
+    repeated Role roles = 11;
+    Location location = 12;
+    bool active = 13;
+    bool approved = 14;
+    string feduid = 15;
+}
+
+message Role {
+    string name = 16;
+    bool value = 17;
+}
+
+message Location {
+    string _id = 18;
+    string name = 19;
+    string locationName = 20;
+    string imageUrl = 21;
+}
+
+service UserService {
+    rpc GetUser (google.protobuf.Empty) returns (User);
+    rpc GetUserDetails (User) returns (User);
+}

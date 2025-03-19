@@ -1,0 +1,25 @@
+# Docker file build
+
+
+# FROM registry.access.redhat.com/ubi8/ubi-minimal
+# WORKDIR /work/
+# COPY target/e_shop-1.9.1.jar /work/application
+# RUN chmod 775 /work
+# EXPOSE ${PORT}
+# # CMD ./application -Dquarkus.http.host=0.0.0.0 -Dquarkus.http.port=${PORT}
+# CMD [" java  -Xms512m -Xmx2g  -jar /work/application/e_shop-1.9.1.jar""]
+# CMD ["exec ls"]
+
+
+FROM adoptopenjdk/openjdk14:ubi
+
+ENV VERTICLE_HOME /work/application
+ENV VERTICLE_FILE e_shop-1.9.1-fat.jar
+
+EXPOSE 8080
+
+WORKDIR ${VERTICLE_HOME}
+COPY verticles/${VERTICLE_FILE} ${VERTICLE_HOME}
+
+ENTRYPOINT [ "sh", "-c" ]
+CMD ["exec java  -Xms512m -Xmx2g  -jar $VERTICLE_FILE"]

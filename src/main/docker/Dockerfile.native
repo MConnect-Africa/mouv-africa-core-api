@@ -1,0 +1,18 @@
+# Docker file build
+
+FROM adoptopenjdk/openjdk14:ubi
+
+ENV VERTICLE_HOME /work/application
+ENV VERTICLE_FILE /target/core-1.9.1-fat.jar
+
+ENV FILE core-1.9.1-fat.jar
+
+EXPOSE 8080
+EXPOSE 8447
+EXPOSE 7000
+
+WORKDIR ${VERTICLE_HOME}
+COPY ${VERTICLE_FILE} ${VERTICLE_HOME}
+
+ENTRYPOINT [ "sh", "-c" ]
+CMD ["exec java  -Xms512m -Xmx2g  -jar $FILE"]

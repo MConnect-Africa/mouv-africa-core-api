@@ -1,0 +1,5 @@
+target/
+.vscode
+*.class
+.env
+src/main/java/org/auth/backend/proto/org/auth/backend
