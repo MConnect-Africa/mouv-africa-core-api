@@ -164,6 +164,4 @@ public class BaseService extends AbstractVerticle {
             }
         }
     }
-
-
 }
