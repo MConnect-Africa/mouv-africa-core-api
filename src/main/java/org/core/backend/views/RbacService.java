@@ -67,7 +67,7 @@ public class RbacService extends PaymentsService {
             JsonObject qry = new JsonObject()
                 .put("task", body.getString("task", "NA"));
 
-            this.getUtils().assignRoleSaveFilters(
+            this.getUtils().assignRoleQueryFilters(
                 xusr, body, true);
             JsonArray roles = body.getJsonArray("roles",
                 body.getJsonArray("role", new JsonArray()));
@@ -89,7 +89,7 @@ public class RbacService extends PaymentsService {
                             Collections.RBAC_TASKS.toString(),
                                 task, headers, resp);
                     } else {
-                        
+
                         for (int i = 0; i < roles.size(); i++) {
                             this.getUtils().setUserRoles(result,
                                 roles.getString(i));
