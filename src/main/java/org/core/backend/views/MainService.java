@@ -36,7 +36,8 @@ public class MainService extends AuthService {
     /**
      * Ther server port to listen to.
      */
-    private int serverPort = Integer.parseInt(System.getenv("PORT"));
+    private int serverPort = Integer.parseInt(
+        System.getenv("PORT"));
 
     /**
      * The grpc server port to listen to.
