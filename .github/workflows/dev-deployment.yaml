@@ -29,7 +29,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
       - name: Create ProtoBufs
         run: |
-          protoc --java_out=src/main/java/org/auth/backend/proto --grpc-java_out=src/main/java/org/auth/backend/proto src/main/java/org/auth/backend/proto/*.proto
+          protoc --java_out=src/main/java/org/core/backend/proto --grpc-java_out=src/main/java/org/core/backend/proto src/main/java/org/core/backend/proto/*.proto
       - name: Package With Maven
         run: |
           mvn clean package -DskipTests
