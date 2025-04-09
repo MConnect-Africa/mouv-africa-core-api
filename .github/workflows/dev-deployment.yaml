@@ -25,6 +25,8 @@ jobs:
           servers: '[{ "id": "laxnit-backend-utils", "username": "${{ secrets.MAVEN_USERNAME }}", "password": "${{ secrets.MAVEN_PASSWORD }}" }]'
           repositories: '[{ "id": "central", "name": "Maven central", "url": "https://repo1.maven.org/maven2", "releases": { "enabled": "true" }, "snapshots": { "enabled": "true" } },{ "id": "laxnit-backend-utils", "name": "laxnit-backend-utils", "url": "https://maven.pkg.github.com/T-Tech-LTD/laxnit-backend-utils/", "releases": { "enabled": "true" }, "snapshots": { "enabled": "true" } }]'
 
+      - name: Install protoc
+        run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
       - name: Create ProtoBufs
         run: |
           protoc --java_out=src/main/java/org/auth/backend/proto --grpc-java_out=src/main/java/org/auth/backend/proto src/main/java/org/auth/backend/proto/*.proto
