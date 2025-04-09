@@ -1,11 +1,14 @@
 package org.core.backend.views;
 
+import com.google.protobuf.Empty;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
+import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 
+import java.util.concurrent.atomic.AtomicInteger;
 import org.core.backend.User;
 import org.core.backend.UserServiceGrpc.UserServiceImplBase;
 import org.core.backend.views.HeaderInterceptor;
@@ -86,7 +89,8 @@ public class UserService extends UserServiceImplBase {
     public static <T extends Message> T buildProtoFromJson(
         final JsonObject jsonObject, final Class<T> clazz) {
         if (jsonObject == null || jsonObject.isEmpty()) {
-            throw new IllegalArgumentException("JsonObject cannot be null or empty.");
+            throw new IllegalArgumentException(
+                "JsonObject cannot be null or empty.");
         }
 
         try {
@@ -130,6 +134,10 @@ public class UserService extends UserServiceImplBase {
                     User response = buildProtoFromJson(
                         usrx, User.class);
                     responseObserver.onNext(response);
+                    responseObserver.onNext(response);
+                    responseObserver.onNext(response);
+                    responseObserver.onNext(response);
+                    responseObserver.onNext(response);
                     responseObserver.onCompleted();
             }, responseObserver);
         } catch (final Exception e) {
@@ -138,6 +146,49 @@ public class UserService extends UserServiceImplBase {
                 e.getMessage(), Status.INTERNAL);
         }
     }
+
+
+    @Override
+    public void streamUserDetails(final User request,
+        final StreamObserver<User> responseObserver) {
+    // public void streamUserDetails(final User request,
+    //     final StreamObserver<User> responseObserver) {
+
+        this.logger.info("getUserDetails -> Streaming response");
+
+        try {
+            Metadata metadata = HeaderInterceptor.getMetadataFromContext();
+
+            this.getUtils().execute2("getUserDetails", request, metadata,
+                (usrx, body, headers, resp) -> {
+
+                    System.out.println("Processing User Data -> " + usrx.encode());
+
+                    User response = buildProtoFromJson(usrx, User.class);
+
+                    // Simulating a stream of responses
+                    Vertx vertx = Vertx.vertx();
+                    int maxResponses = 5; // Example: stream 5 responses
+                    AtomicInteger counter = new AtomicInteger(0);
+
+                    long timerId = vertx.setPeriodic(1000, id -> {
+                        if (counter.incrementAndGet() > maxResponses) {
+                            vertx.cancelTimer(id);
+                            responseObserver.onCompleted(); // End stream
+                        } else {
+                            System.out.println("Sending streaming response " + counter.get());
+                            responseObserver.onNext(response);
+                        }
+                    });
+
+            }, responseObserver);
+        } catch (final Exception e) {
+            System.out.println(e.getMessage());
+            this.getUtils().sendErrorResponse(responseObserver,
+                e.getMessage(), Status.INTERNAL);
+        }
+    }
+
 
     // /**
     //  * The test method to get skey.

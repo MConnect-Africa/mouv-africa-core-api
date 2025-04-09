@@ -6,7 +6,7 @@ import static io.grpc.MethodDescriptor.generateFullMethodName;
  */
 @javax.annotation.Generated(
     value = "by gRPC proto compiler (version 1.64.0)",
-    comments = "Source: src/main/java/org/auth/backend/proto/user.proto")
+    comments = "Source: src/main/java/org/core/backend/proto/user.proto")
 @io.grpc.stub.annotations.GrpcGenerated
 public final class UserServiceGrpc {
 
@@ -77,6 +77,37 @@ public final class UserServiceGrpc {
     return getGetUserDetailsMethod;
   }
 
+  private static volatile io.grpc.MethodDescriptor<org.core.backend.User,
+      org.core.backend.User> getStreamUserDetailsMethod;
+
+  @io.grpc.stub.annotations.RpcMethod(
+      fullMethodName = SERVICE_NAME + '/' + "StreamUserDetails",
+      requestType = org.core.backend.User.class,
+      responseType = org.core.backend.User.class,
+      methodType = io.grpc.MethodDescriptor.MethodType.SERVER_STREAMING)
+  public static io.grpc.MethodDescriptor<org.core.backend.User,
+      org.core.backend.User> getStreamUserDetailsMethod() {
+    io.grpc.MethodDescriptor<org.core.backend.User, org.core.backend.User> getStreamUserDetailsMethod;
+    if ((getStreamUserDetailsMethod = UserServiceGrpc.getStreamUserDetailsMethod) == null) {
+      synchronized (UserServiceGrpc.class) {
+        if ((getStreamUserDetailsMethod = UserServiceGrpc.getStreamUserDetailsMethod) == null) {
+          UserServiceGrpc.getStreamUserDetailsMethod = getStreamUserDetailsMethod =
+              io.grpc.MethodDescriptor.<org.core.backend.User, org.core.backend.User>newBuilder()
+              .setType(io.grpc.MethodDescriptor.MethodType.SERVER_STREAMING)
+              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "StreamUserDetails"))
+              .setSampledToLocalTracing(true)
+              .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  org.core.backend.User.getDefaultInstance()))
+              .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  org.core.backend.User.getDefaultInstance()))
+              .setSchemaDescriptor(new UserServiceMethodDescriptorSupplier("StreamUserDetails"))
+              .build();
+        }
+      }
+    }
+    return getStreamUserDetailsMethod;
+  }
+
   /**
    * Creates a new async stub that supports all call types for the service
    */
@@ -138,6 +169,13 @@ public final class UserServiceGrpc {
         io.grpc.stub.StreamObserver<org.core.backend.User> responseObserver) {
       io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall(getGetUserDetailsMethod(), responseObserver);
     }
+
+    /**
+     */
+    default void streamUserDetails(org.core.backend.User request,
+        io.grpc.stub.StreamObserver<org.core.backend.User> responseObserver) {
+      io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall(getStreamUserDetailsMethod(), responseObserver);
+    }
   }
 
   /**
@@ -182,6 +220,14 @@ public final class UserServiceGrpc {
       io.grpc.stub.ClientCalls.asyncUnaryCall(
           getChannel().newCall(getGetUserDetailsMethod(), getCallOptions()), request, responseObserver);
     }
+
+    /**
+     */
+    public void streamUserDetails(org.core.backend.User request,
+        io.grpc.stub.StreamObserver<org.core.backend.User> responseObserver) {
+      io.grpc.stub.ClientCalls.asyncServerStreamingCall(
+          getChannel().newCall(getStreamUserDetailsMethod(), getCallOptions()), request, responseObserver);
+    }
   }
 
   /**
@@ -212,6 +258,14 @@ public final class UserServiceGrpc {
     public org.core.backend.User getUserDetails(org.core.backend.User request) {
       return io.grpc.stub.ClientCalls.blockingUnaryCall(
           getChannel(), getGetUserDetailsMethod(), getCallOptions(), request);
+    }
+
+    /**
+     */
+    public java.util.Iterator<org.core.backend.User> streamUserDetails(
+        org.core.backend.User request) {
+      return io.grpc.stub.ClientCalls.blockingServerStreamingCall(
+          getChannel(), getStreamUserDetailsMethod(), getCallOptions(), request);
     }
   }
 
@@ -250,6 +304,7 @@ public final class UserServiceGrpc {
 
   private static final int METHODID_GET_USER = 0;
   private static final int METHODID_GET_USER_DETAILS = 1;
+  private static final int METHODID_STREAM_USER_DETAILS = 2;
 
   private static final class MethodHandlers<Req, Resp> implements
       io.grpc.stub.ServerCalls.UnaryMethod<Req, Resp>,
@@ -274,6 +329,10 @@ public final class UserServiceGrpc {
           break;
         case METHODID_GET_USER_DETAILS:
           serviceImpl.getUserDetails((org.core.backend.User) request,
+              (io.grpc.stub.StreamObserver<org.core.backend.User>) responseObserver);
+          break;
+        case METHODID_STREAM_USER_DETAILS:
+          serviceImpl.streamUserDetails((org.core.backend.User) request,
               (io.grpc.stub.StreamObserver<org.core.backend.User>) responseObserver);
           break;
         default:
@@ -308,6 +367,13 @@ public final class UserServiceGrpc {
               org.core.backend.User,
               org.core.backend.User>(
                 service, METHODID_GET_USER_DETAILS)))
+        .addMethod(
+          getStreamUserDetailsMethod(),
+          io.grpc.stub.ServerCalls.asyncServerStreamingCall(
+            new MethodHandlers<
+              org.core.backend.User,
+              org.core.backend.User>(
+                service, METHODID_STREAM_USER_DETAILS)))
         .build();
   }
 
@@ -358,6 +424,7 @@ public final class UserServiceGrpc {
               .setSchemaDescriptor(new UserServiceFileDescriptorSupplier())
               .addMethod(getGetUserMethod())
               .addMethod(getGetUserDetailsMethod())
+              .addMethod(getStreamUserDetailsMethod())
               .build();
         }
       }

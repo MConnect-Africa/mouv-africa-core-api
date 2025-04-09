@@ -41,4 +41,6 @@ message Location {
 service UserService {
     rpc GetUser (google.protobuf.Empty) returns (User);
     rpc GetUserDetails (User) returns (User);
+    rpc StreamUserDetails (User) returns (stream User);
+    rpc createUser (User) returns (User);
 }
