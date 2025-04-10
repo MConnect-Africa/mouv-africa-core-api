@@ -50,13 +50,12 @@ jobs:
           password: ${{ secrets.REGISTRY_PASSWORD }}
       - name: Tag docker image
         run: |
-          docker tag vertx/mouv-core:latest mouvAfrica/mouv-core:latest
+          docker tag vertx/mouv-core:latest mouv-admin/mouv-core:latest
       - name: Push to registry
         run: |
-          docker push mouvAfrica/mouv-core:latest
+          docker push mouv-admin/mouv-core:latest
 
 # docker stop laxnit_auth_dev; docker rm laxnit_auth_dev; sudo docker system prune -a
 # docker run -d --name laxnit_auth_dev --restart unless-stopped -p 8447:8447 --env-file /opt/envars/laxnit_dev.env dkdenno/mouv-core:latest
-
 
 # docker run -d --name laxnit_auth_dev --restart unless-stopped -p 8080:8080 -p 7000:7000 --env-file .env vertx/mouv-core:latest
