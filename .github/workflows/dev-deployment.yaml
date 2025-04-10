@@ -41,6 +41,7 @@ jobs:
       - name: Install protoc-gen-grpc-java plugin
         run: |
           mkdir -p $HOME/bin
+          # Download the Linux-compatible protoc-gen-grpc-java binary (without the .exe extension)
           curl -L https://repo1.maven.org/maven2/io/grpc/protoc-gen-grpc-java/1.62.2/protoc-gen-grpc-java-1.62.2-linux-x86_64 -o $HOME/bin/protoc-gen-grpc-java
           chmod +x $HOME/bin/protoc-gen-grpc-java
           echo "$HOME/bin" >> $GITHUB_PATH
