@@ -11,7 +11,7 @@
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <!-- vert.x properties -->
-        <vertx.version>4.5.11</vertx.version>
+        <vertx.version>4.5.14</vertx.version>
         <vertx.verticle>org.core.backend.views.MainService</vertx.verticle>
         <!-- Maven plugins -->
         <vertx-maven-plugin.version>1.0.13</vertx-maven-plugin.version>
@@ -170,6 +170,11 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>2.0.7</version> <!-- Latest stable version -->
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>1.4.11</version>
         </dependency>
 
         <!-- SLF4J Simple Implementation (console logging) -->
