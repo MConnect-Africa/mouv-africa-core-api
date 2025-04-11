@@ -61,12 +61,13 @@ public final class UserServiceProto {
       "roved\030\016 \001(\010\022\016\n\006feduid\030\017 \001(\t\"#\n\004Role\022\014\n\004n" +
       "ame\030\020 \001(\t\022\r\n\005value\030\021 \001(\010\"M\n\010Location\022\013\n\003" +
       "_id\030\022 \001(\t\022\014\n\004name\030\023 \001(\t\022\024\n\014locationName\030" +
-      "\024 \001(\t\022\020\n\010imageUrl\030\025 \001(\t2\225\001\n\013UserService\022" +
+      "\024 \001(\t\022\020\n\010imageUrl\030\025 \001(\t2\273\001\n\013UserService\022" +
       "-\n\007GetUser\022\026.google.protobuf.Empty\032\n.use" +
       "r.User\022(\n\016GetUserDetails\022\n.user.User\032\n.u" +
       "ser.User\022-\n\021StreamUserDetails\022\n.user.Use" +
-      "r\032\n.user.User0\001B&\n\020org.core.backendB\020Use" +
-      "rServiceProtoP\001b\006proto3"
+      "r\032\n.user.User0\001\022$\n\ncreateUser\022\n.user.Use" +
+      "r\032\n.user.UserB&\n\020org.core.backendB\020UserS" +
+      "erviceProtoP\001b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,

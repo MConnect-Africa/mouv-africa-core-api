@@ -45,15 +45,15 @@ jobs:
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          registry: mouv-registry.dk-denno.com
+          # registry: mouv-registry.dk-denno.com
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
       - name: Tag docker image
         run: |
-          docker tag vertx/mouv-core:latest mouv-admin/mouv-core:latest
+          docker tag vertx/mouv-core:latest mouv-registry.dk-denno.com/mouv-admin/mouv-core:latest
       - name: Push to registry
         run: |
-          docker push mouv-admin/mouv-core:latest
+          docker push mouv-registry.dk-denno.com/mouv-admin/mouv-core:latest
 
 # docker stop laxnit_auth_dev; docker rm laxnit_auth_dev; sudo docker system prune -a
 # docker run -d --name laxnit_auth_dev --restart unless-stopped -p 8447:8447 --env-file /opt/envars/laxnit_dev.env dkdenno/mouv-core:latest

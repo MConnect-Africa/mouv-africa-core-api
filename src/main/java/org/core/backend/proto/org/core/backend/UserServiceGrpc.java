@@ -108,6 +108,37 @@ public final class UserServiceGrpc {
     return getStreamUserDetailsMethod;
   }
 
+  private static volatile io.grpc.MethodDescriptor<org.core.backend.User,
+      org.core.backend.User> getCreateUserMethod;
+
+  @io.grpc.stub.annotations.RpcMethod(
+      fullMethodName = SERVICE_NAME + '/' + "createUser",
+      requestType = org.core.backend.User.class,
+      responseType = org.core.backend.User.class,
+      methodType = io.grpc.MethodDescriptor.MethodType.UNARY)
+  public static io.grpc.MethodDescriptor<org.core.backend.User,
+      org.core.backend.User> getCreateUserMethod() {
+    io.grpc.MethodDescriptor<org.core.backend.User, org.core.backend.User> getCreateUserMethod;
+    if ((getCreateUserMethod = UserServiceGrpc.getCreateUserMethod) == null) {
+      synchronized (UserServiceGrpc.class) {
+        if ((getCreateUserMethod = UserServiceGrpc.getCreateUserMethod) == null) {
+          UserServiceGrpc.getCreateUserMethod = getCreateUserMethod =
+              io.grpc.MethodDescriptor.<org.core.backend.User, org.core.backend.User>newBuilder()
+              .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
+              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "createUser"))
+              .setSampledToLocalTracing(true)
+              .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  org.core.backend.User.getDefaultInstance()))
+              .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  org.core.backend.User.getDefaultInstance()))
+              .setSchemaDescriptor(new UserServiceMethodDescriptorSupplier("createUser"))
+              .build();
+        }
+      }
+    }
+    return getCreateUserMethod;
+  }
+
   /**
    * Creates a new async stub that supports all call types for the service
    */
@@ -176,6 +207,13 @@ public final class UserServiceGrpc {
         io.grpc.stub.StreamObserver<org.core.backend.User> responseObserver) {
       io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall(getStreamUserDetailsMethod(), responseObserver);
     }
+
+    /**
+     */
+    default void createUser(org.core.backend.User request,
+        io.grpc.stub.StreamObserver<org.core.backend.User> responseObserver) {
+      io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall(getCreateUserMethod(), responseObserver);
+    }
   }
 
   /**
@@ -228,6 +266,14 @@ public final class UserServiceGrpc {
       io.grpc.stub.ClientCalls.asyncServerStreamingCall(
           getChannel().newCall(getStreamUserDetailsMethod(), getCallOptions()), request, responseObserver);
     }
+
+    /**
+     */
+    public void createUser(org.core.backend.User request,
+        io.grpc.stub.StreamObserver<org.core.backend.User> responseObserver) {
+      io.grpc.stub.ClientCalls.asyncUnaryCall(
+          getChannel().newCall(getCreateUserMethod(), getCallOptions()), request, responseObserver);
+    }
   }
 
   /**
@@ -267,6 +313,13 @@ public final class UserServiceGrpc {
       return io.grpc.stub.ClientCalls.blockingServerStreamingCall(
           getChannel(), getStreamUserDetailsMethod(), getCallOptions(), request);
     }
+
+    /**
+     */
+    public org.core.backend.User createUser(org.core.backend.User request) {
+      return io.grpc.stub.ClientCalls.blockingUnaryCall(
+          getChannel(), getCreateUserMethod(), getCallOptions(), request);
+    }
   }
 
   /**
@@ -300,11 +353,20 @@ public final class UserServiceGrpc {
       return io.grpc.stub.ClientCalls.futureUnaryCall(
           getChannel().newCall(getGetUserDetailsMethod(), getCallOptions()), request);
     }
+
+    /**
+     */
+    public com.google.common.util.concurrent.ListenableFuture<org.core.backend.User> createUser(
+        org.core.backend.User request) {
+      return io.grpc.stub.ClientCalls.futureUnaryCall(
+          getChannel().newCall(getCreateUserMethod(), getCallOptions()), request);
+    }
   }
 
   private static final int METHODID_GET_USER = 0;
   private static final int METHODID_GET_USER_DETAILS = 1;
   private static final int METHODID_STREAM_USER_DETAILS = 2;
+  private static final int METHODID_CREATE_USER = 3;
 
   private static final class MethodHandlers<Req, Resp> implements
       io.grpc.stub.ServerCalls.UnaryMethod<Req, Resp>,
@@ -333,6 +395,10 @@ public final class UserServiceGrpc {
           break;
         case METHODID_STREAM_USER_DETAILS:
           serviceImpl.streamUserDetails((org.core.backend.User) request,
+              (io.grpc.stub.StreamObserver<org.core.backend.User>) responseObserver);
+          break;
+        case METHODID_CREATE_USER:
+          serviceImpl.createUser((org.core.backend.User) request,
               (io.grpc.stub.StreamObserver<org.core.backend.User>) responseObserver);
           break;
         default:
@@ -374,6 +440,13 @@ public final class UserServiceGrpc {
               org.core.backend.User,
               org.core.backend.User>(
                 service, METHODID_STREAM_USER_DETAILS)))
+        .addMethod(
+          getCreateUserMethod(),
+          io.grpc.stub.ServerCalls.asyncUnaryCall(
+            new MethodHandlers<
+              org.core.backend.User,
+              org.core.backend.User>(
+                service, METHODID_CREATE_USER)))
         .build();
   }
 
@@ -425,6 +498,7 @@ public final class UserServiceGrpc {
               .addMethod(getGetUserMethod())
               .addMethod(getGetUserDetailsMethod())
               .addMethod(getStreamUserDetailsMethod())
+              .addMethod(getCreateUserMethod())
               .build();
         }
       }
