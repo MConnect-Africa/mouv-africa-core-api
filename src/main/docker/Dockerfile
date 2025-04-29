@@ -21,6 +21,9 @@ EXPOSE 7000
 WORKDIR ${VERTICLE_HOME}
 COPY ${VERTICLE_FILE} ${VERTICLE_HOME}
 
+ADD CERT ${VERTICLE_HOME}/CERT
+
+
 # Set entry point and default command
 ENTRYPOINT [ "sh", "-c" ]
-CMD ["exec java  -Xms512m -Xmx2g  -jar $FILE"]
+CMD ["exec java -Dhttps.protocols=TLSv1.2 -Djavax.net.debug=ssl -Djavax.net.ssl.trustStore=/path/to/keystore.jks -Djavax.net.ssl.trustStorePassword=changeit  -Xms512m -Xmx2g  -jar $FILE"]
