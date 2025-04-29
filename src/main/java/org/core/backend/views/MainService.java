@@ -122,24 +122,28 @@ public class MainService extends AuthService {
         this.setUtils(new Utils(() -> { }));
         // this.setIdentityManagement(new IdentityManagement(this.getDbUtils()));
         // HttpServerOptions opts = new HttpServerOptions();
-        if (customport < 8000) {
-            this.vertx.createHttpServer()
-                .requestHandler(router)
-                .listen(customport, handler);
+        // if (customport < 8000) {
+        //     this.vertx.createHttpServer()
+        //         .requestHandler(router)
+        //         .listen(customport, handler);
 
-        } else {
-            JksOptions jksOptions = new JksOptions()
-                .setPath(Utils.KEYSTORE_FILE)
-                .setPassword("ThisIsMyPassword23@#");
+        // } else {
+        //     JksOptions jksOptions = new JksOptions()
+        //         .setPath(Utils.KEYSTORE_FILE)
+        //         .setPassword("ThisIsMyPassword23@#");
 
-            HttpServerOptions opts = new HttpServerOptions()
-                .setSsl(true)
-                .setKeyStoreOptions(jksOptions);
+        //     HttpServerOptions opts = new HttpServerOptions()
+        //         .setSsl(true)
+        //         .setKeyStoreOptions(jksOptions);
 
-            this.vertx.createHttpServer(opts)
-                .requestHandler(router)
-                .listen(customport, handler);
-        }
+        //     this.vertx.createHttpServer(opts)
+        //         .requestHandler(router)
+        //         .listen(customport, handler);
+        // }
+
+        this.vertx.createHttpServer()
+            .requestHandler(router)
+            .listen(customport, handler);
 
         // Sart blocking processes.
         this.startBlockingProcesses();
