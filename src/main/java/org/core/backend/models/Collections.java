@@ -30,5 +30,11 @@ public enum Collections {
         public String toString() {
             return "rbac_task";
         }
+    },
+
+    DOCUMENT_TYPES {
+        public String toString() {
+            return "documents";
+        }
     }
 }
