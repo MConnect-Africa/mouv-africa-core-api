@@ -36,5 +36,17 @@ public enum Collections {
         public String toString() {
             return "documents";
         }
+    },
+
+    PRODUCTS {
+        public String toString() {
+            return "products";
+        }
+    },
+
+    ORGANISATION_PRODUCTS {
+        public String toString() {
+            return "organisation_products";
+        }
     }
 }
