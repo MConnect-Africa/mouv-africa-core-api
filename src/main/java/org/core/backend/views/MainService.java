@@ -143,7 +143,7 @@ public class MainService extends AuthService {
 
         this.vertx.createHttpServer()
             .requestHandler(router)
-            .listen(customport, handler);
+            .listen(customport, "0.0.0.0", handler);
 
         // Sart blocking processes.
         this.startBlockingProcesses();

@@ -7,6 +7,7 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import java.util.UUID;
 import org.core.backend.models.Collections;
+import org.core.backend.models.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.utils.backend.models.RbacTasks;
@@ -42,6 +43,8 @@ public class OrganisationService extends AdminService{
             .handler(this::updateOrganisation);
         router.post("/listorganisations")
             .handler(this::listOrganisations);
+        router.post("/listStatuses")
+            .handler(this::listStatuses);
 
         this.setAdminRoutes(router);
     }
@@ -55,38 +58,44 @@ public class OrganisationService extends AdminService{
         this.getUtils().execute2(MODULE + "createOrganisation", rc,
         (xusr, body, params, headers, resp) -> {
 
-            String userId = this.getUtils().isRole("superadmin", xusr)
-                ? body.getString("userId", null)
-                : xusr.getString("_id");
+            String orgId = xusr.getString("organisationId");
+            if (orgId == null || orgId.isEmpty()) {
+                String userId = this.getUtils().isRole("superadmin", xusr)
+                    ? body.getString("userId", null)
+                    : xusr.getString("_id");
 
-            String orgId = UUID.randomUUID().toString();
-            this.getUser(userId, founder -> {
-                body.put("organisationId", orgId)
-                    .put("isActive", true);
-                    // .put("founderFeduid", founder.getString("feduid"));
-                this.getUtils().addUserToObject("founder",
-                    founder, body);
-                this.getUtils().setUserRoles(founder, "admin");
-                this.getDbUtils().save(
-                    Collections.ORGANISATION.toString(), body, headers, () -> {
-                    founder.put("organisationId", orgId);
+                this.getUser(userId, founder -> {
+                    body.put("organisationId", orgId)
+                        .put("isActive", true);
+                    this.getUtils().addUserToObject("founder",
+                        founder, body);
+                    this.getUtils().setUserRoles(founder, "admin");
+                    this.getUtils().setUserRoles(founder, body.getString("accountType"));
+                    body.put("status", Status.ACTIVE);
                     this.getDbUtils().save(
-                        Collections.USERS.toString(), founder, headers);
+                        Collections.ORGANISATION.toString(), body, headers, () -> {
+                        founder.put("organisationId", orgId);
+                        this.getDbUtils().save(
+                            Collections.USERS.toString(), founder, headers);
+                        resp.end(this.getUtils().getResponse(
+                            body).encode());
+                        // create default rbac tasks
+                        this.createOrganisationDefaultRbacTasks(orgId);
+                    }, fail -> {
+                        this.logger.error(fail.getMessage(), fail);
+                        resp.end(this.getUtils().getResponse(
+                            Utils.ERR_502, fail.getMessage()).encode());
+                    });
+                }, () -> {
                     resp.end(this.getUtils().getResponse(
-                        body).encode());
-                    // create default rbac tasks
-                    this.createOrganisationDefaultRbacTasks(orgId);
-                }, fail -> {
-                    this.logger.error(fail.getMessage(), fail);
-                    resp.end(this.getUtils().getResponse(
-                        Utils.ERR_502, fail.getMessage()).encode());
-                });
-            }, () -> {
+                        Utils.ERR_503, "User with _id "
+                            + xusr.getString("_id")
+                            + " is missing").encode());
+                }, resp);
+            } else {
                 resp.end(this.getUtils().getResponse(
-                    Utils.ERR_503, "User with _id "
-                        + xusr.getString("_id")
-                        + " is missing").encode());
-            }, resp);
+                    Utils.ERR_402, "User Already belongs to an organisation").encode());
+            }
         }, "name", "phoneNumber", "email");
     }
 
@@ -167,6 +176,23 @@ public class OrganisationService extends AdminService{
     }
 
     /**
+     * Update an organisation.
+     * @param rc The routing context.
+     */
+    @SystemTasks(task = MODULE + "listStatuses")
+    private void listStatuses(final RoutingContext rc) {
+        this.getUtils().execute2(MODULE + "listStatuses", rc,
+        (xusr, body, params, headers, resp) -> {
+            JsonArray results = new JsonArray();
+            for (Status status: Status.values()) {
+                results.add(new JsonObject()
+                    .put("name", status.name()));
+            }
+            resp.end(this.getUtils().getResponse(results).encode());
+        });
+    }
+
+    /**
      * Creates the organisation default rbac tasks.
      * @param organisationId The organisation id.
      */
@@ -183,28 +209,7 @@ public class OrganisationService extends AdminService{
             .add("auth-adminFetchRbacTasks")
             .add("auth-listUsers")
             .add("auth-addRoles")
-            .add("auth-listTasks")
-            .add("messaging-sendSms")
-            .add("messaging-addNewTemplate")
-            .add("messaging-listTemplates")
-            .add("messaging-removeTemplates")
-            .add("messaging-reviewTemplate")
-            .add("messaging-listContacts")
-            .add("messaging-removeContacts")
-            .add("messaging-adminFetchRbacTasks")
-            .add("messaging-adminAddNewRbacTask")
-            .add("messaging-readMessagingMoneyConversionRate")
-            .add("messaging-buySmsCallback")
-            .add("messaging-replenishSmsTokens")
-            .add("messaging-sendMinimumThreshHoldForSmsToken")
-            .add("messaging-addInteralNotificationsTeamEmails")
-            .add("messaging-listTasks")
-            .add("batch-adminFetchRbacTasks")
-            .add("batch-adminAddNewRbacTask")
-            .add("batch-adminDeleteRbacTask")
-            .add("batch-listTasks")
-            .add("batch-listScheduledSms")
-            .add("batch-schedulesms");
+            .add("auth-listTasks");
 
         for (int i = Utils.ZERO; i < tasks.size(); i++) {
 
