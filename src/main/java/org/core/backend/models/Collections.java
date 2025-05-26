@@ -48,5 +48,23 @@ public enum Collections {
         public String toString() {
             return "organisation_products";
         }
+    },
+
+    /**
+     * The listings collection.
+     */
+    LISTINGS {
+        public String toString() {
+            return "listings";
+        }
+    },
+
+    /**
+     * The listing types collection.
+     */
+    LISTING_TYPES {
+        public String toString() {
+            return "listing_types";
+        }
     }
 }
