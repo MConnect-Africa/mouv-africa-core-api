@@ -66,5 +66,41 @@ public enum Collections {
         public String toString() {
             return "listing_types";
         }
+    },
+
+    /**
+     * The discounts collection.
+     */
+    DISCOUNTS {
+        public String toString() {
+            return "discounts";
+        }
+    },
+
+    /**
+     * The promotions collection.
+     */
+    PROMOTIONS {
+        public String toString() {
+            return "promotions";
+        }
+    },
+
+    /**
+     * The listing promotions collection (many-to-many relationship).
+     */
+    LISTING_PROMOTIONS {
+        public String toString() {
+            return "listing_promotions";
+        }
+    },
+
+    /**
+     * The listing discounts collection (many-to-many relationship).
+     */
+    LISTING_DISCOUNTS {
+        public String toString() {
+            return "listing_discounts";
+        }
     }
 }

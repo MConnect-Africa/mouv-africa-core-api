@@ -66,6 +66,40 @@ public class ListingsService extends OrganisationService {
 		router.post("/listListingsByOrganisation")
 				.handler(this::listListingsByOrganisation);
 
+		// Discount management routes
+		router.post("/createDiscount")
+				.handler(this::createDiscount);
+		router.post("/listDiscounts")
+				.handler(this::listDiscounts);
+		router.post("/updateDiscount")
+				.handler(this::updateDiscount);
+		router.post("/deleteDiscount")
+				.handler(this::deleteDiscount);
+		router.post("/applyDiscountToListing")
+				.handler(this::applyDiscountToListing);
+		router.post("/removeDiscountFromListing")
+				.handler(this::removeDiscountFromListing);
+
+		// Promotion management routes
+		router.post("/createPromotion")
+				.handler(this::createPromotion);
+		router.post("/listPromotions")
+				.handler(this::listPromotions);
+		router.post("/updatePromotion")
+				.handler(this::updatePromotion);
+		router.post("/deletePromotion")
+				.handler(this::deletePromotion);
+		router.post("/applyPromotionToListing")
+				.handler(this::applyPromotionToListing);
+		router.post("/removePromotionFromListing")
+				.handler(this::removePromotionFromListing);
+
+		// Advanced pricing operations
+		router.post("/getListingEffectivePrice")
+				.handler(this::getListingEffectivePrice);
+		router.post("/listListingsWithActivePromotions")
+				.handler(this::listListingsWithActivePromotions);
+
 		// Call parent organization service routes
 		this.setAdminRoutes(router);
 	}
@@ -116,7 +150,7 @@ public class ListingsService extends OrganisationService {
 						resp.end(this.getUtils().getResponse(
 								Utils.ERR_502, e.getMessage()).encode());
 					}
-				}, "listingType", "title");
+				}, "listingType", "title", "amount");
 	}
 
 	/**
@@ -475,6 +509,589 @@ public class ListingsService extends OrganisationService {
 				error -> {
 					// Log error but don't fail the main request
 					this.logger.error("Failed to increment views for listing: " + listingId, error);
+				});
+	}
+
+	// =============================================================================
+	// DISCOUNT MANAGEMENT METHODS
+	// =============================================================================
+
+	/**
+	 * Creates a new discount.
+	 * 
+	 * @param rc The routing context.
+	 */
+	@SystemTasks(task = MODULE + "createDiscount")
+	private void createDiscount(final RoutingContext rc) {
+		this.getUtils().execute2(MODULE + "createDiscount", rc,
+				(xusr, body, params, headers, resp) -> {
+					try {
+						// Generate unique discount ID
+						String discountId = UUID.randomUUID().toString();
+
+						// Add mandatory system fields
+						body.put("_id", discountId)
+								.put("organizationId", xusr.getString("organisationId"))
+								.put("createdBy", xusr.getString("_id"))
+								.put("createdAt", Instant.now().toString())
+								.put("updatedAt", Instant.now().toString())
+								.put("status", "active");
+
+						// Validate discount type and value
+						String discountType = body.getString("type", "percentage");
+						Double discountValue = body.getDouble("value");
+
+						if (discountValue == null || discountValue <= 0) {
+							resp.end(this.getUtils().getResponse(
+									Utils.ERR_400, "Discount value must be greater than 0").encode());
+							return;
+						}
+
+						if ("percentage".equals(discountType) && discountValue > 100) {
+							resp.end(this.getUtils().getResponse(
+									Utils.ERR_400, "Percentage discount cannot exceed 100%").encode());
+							return;
+						}
+
+						// Save discount
+						this.getUtils().assignRoleSaveFilters(xusr, body);
+						this.getDbUtils().save(Collections.DISCOUNTS.toString(), body, headers, resp);
+
+					} catch (final Exception e) {
+						this.logger.error(e.getMessage(), e);
+						resp.end(this.getUtils().getResponse(
+								Utils.ERR_502, e.getMessage()).encode());
+					}
+				}, "name", "type", "value");
+	}
+
+	/**
+	 * Lists discounts with filtering support.
+	 * 
+	 * @param rc The routing context.
+	 */
+	@SystemTasks(task = MODULE + "listDiscounts")
+	private void listDiscounts(final RoutingContext rc) {
+		this.getUtils().execute2(MODULE + "listDiscounts", rc,
+				(xusr, body, params, headers, resp) -> {
+					// Apply role-based query filters
+					this.getUtils().assignRoleQueryFilters(xusr, body, false);
+
+					this.getDbUtils().find(Collections.DISCOUNTS.toString(), body, resp);
+				});
+	}
+
+	/**
+	 * Updates a discount.
+	 * 
+	 * @param rc The routing context.
+	 */
+	@SystemTasks(task = MODULE + "updateDiscount")
+	private void updateDiscount(final RoutingContext rc) {
+		this.getUtils().execute2(MODULE + "updateDiscount", rc,
+				(xusr, body, params, headers, resp) -> {
+					try {
+						// Remove _id from update body and set updatedAt
+						String discountId = body.getString("_id");
+						body.remove("_id");
+						body.put("updatedAt", Instant.now().toString());
+
+						JsonObject query = new JsonObject()
+								.put("_id", discountId);
+
+						// Apply role-based query filters
+						this.getUtils().assignRoleQueryFilters(xusr, query, false);
+
+						this.getDbUtils().update(Collections.DISCOUNTS.toString(), query, body, resp);
+
+					} catch (final Exception e) {
+						this.logger.error(e.getMessage(), e);
+						resp.end(this.getUtils().getResponse(
+								Utils.ERR_502, e.getMessage()).encode());
+					}
+				}, "_id");
+	}
+
+	/**
+	 * Deletes a discount (soft delete).
+	 * 
+	 * @param rc The routing context.
+	 */
+	@SystemTasks(task = MODULE + "deleteDiscount")
+	private void deleteDiscount(final RoutingContext rc) {
+		this.getUtils().execute2(MODULE + "deleteDiscount", rc,
+				(xusr, body, params, headers, resp) -> {
+					JsonObject query = new JsonObject()
+							.put("_id", body.getString("_id"));
+
+					// Apply role-based query filters
+					this.getUtils().assignRoleQueryFilters(xusr, query, false);
+
+					JsonObject update = new JsonObject()
+							.put("status", "deleted")
+							.put("deletedAt", Instant.now().toString())
+							.put("deletedBy", xusr.getString("_id"));
+
+					this.getDbUtils().update(Collections.DISCOUNTS.toString(), query, update, resp);
+				}, "_id");
+	}
+
+	/**
+	 * Applies a discount to a listing.
+	 * 
+	 * @param rc The routing context.
+	 */
+	@SystemTasks(task = MODULE + "applyDiscountToListing")
+	private void applyDiscountToListing(final RoutingContext rc) {
+		this.getUtils().execute2(MODULE + "applyDiscountToListing", rc,
+				(xusr, body, params, headers, resp) -> {
+					try {
+						String listingId = body.getString("listingId");
+						String discountId = body.getString("discountId");
+
+						// Check if listing exists and user has access
+						JsonObject listingQuery = new JsonObject().put("_id", listingId);
+						this.getUtils().assignRoleQueryFilters(xusr, listingQuery, false);
+
+						this.getDbUtils().findOne(Collections.LISTINGS.toString(), listingQuery, listing -> {
+							if (listing == null || listing.isEmpty()) {
+								resp.end(this.getUtils().getResponse(
+										Utils.ERR_404, "Listing not found").encode());
+								return;
+							}
+
+							// Check if discount exists and is active
+							JsonObject discountQuery = new JsonObject()
+									.put("_id", discountId)
+									.put("status", "active");
+							this.getUtils().assignRoleQueryFilters(xusr, discountQuery, false);
+
+							this.getDbUtils().findOne(Collections.DISCOUNTS.toString(), discountQuery, discount -> {
+								if (discount == null || discount.isEmpty()) {
+									resp.end(this.getUtils().getResponse(
+											Utils.ERR_404, "Active discount not found").encode());
+									return;
+								}
+
+								// Create listing-discount relationship
+								JsonObject listingDiscount = new JsonObject()
+										.put("_id", UUID.randomUUID().toString())
+										.put("listingId", listingId)
+										.put("discountId", discountId)
+										.put("organizationId", xusr.getString("organisationId"))
+										.put("appliedBy", xusr.getString("_id"))
+										.put("appliedAt", Instant.now().toString())
+										.put("status", "active");
+
+								this.getUtils().assignRoleSaveFilters(xusr, listingDiscount);
+								this.getDbUtils().save(Collections.LISTING_DISCOUNTS.toString(),
+										listingDiscount, headers, resp);
+							}, resp);
+						}, resp);
+
+					} catch (final Exception e) {
+						this.logger.error(e.getMessage(), e);
+						resp.end(this.getUtils().getResponse(
+								Utils.ERR_502, e.getMessage()).encode());
+					}
+				}, "listingId", "discountId");
+	}
+
+	/**
+	 * Removes a discount from a listing.
+	 * 
+	 * @param rc The routing context.
+	 */
+	@SystemTasks(task = MODULE + "removeDiscountFromListing")
+	private void removeDiscountFromListing(final RoutingContext rc) {
+		this.getUtils().execute2(MODULE + "removeDiscountFromListing", rc,
+				(xusr, body, params, headers, resp) -> {
+					JsonObject query = new JsonObject()
+							.put("listingId", body.getString("listingId"))
+							.put("discountId", body.getString("discountId"))
+							.put("status", "active");
+
+					this.getUtils().assignRoleQueryFilters(xusr, query, false);
+
+					JsonObject update = new JsonObject()
+							.put("status", "removed")
+							.put("removedAt", Instant.now().toString())
+							.put("removedBy", xusr.getString("_id"));
+
+					this.getDbUtils().update(Collections.LISTING_DISCOUNTS.toString(), query, update, resp);
+				}, "listingId", "discountId");
+	}
+
+	// =============================================================================
+	// PROMOTION MANAGEMENT METHODS
+	// =============================================================================
+
+	/**
+	 * Creates a new promotion.
+	 * 
+	 * @param rc The routing context.
+	 */
+	@SystemTasks(task = MODULE + "createPromotion")
+	private void createPromotion(final RoutingContext rc) {
+		this.getUtils().execute2(MODULE + "createPromotion", rc,
+				(xusr, body, params, headers, resp) -> {
+					try {
+						// Generate unique promotion ID
+						String promotionId = UUID.randomUUID().toString();
+
+						// Add mandatory system fields
+						body.put("_id", promotionId)
+								.put("organizationId", xusr.getString("organisationId"))
+								.put("createdBy", xusr.getString("_id"))
+								.put("createdAt", Instant.now().toString())
+								.put("updatedAt", Instant.now().toString())
+								.put("status", "active");
+
+						// Validate start and end dates
+						String startDate = body.getString("startDate");
+						String endDate = body.getString("endDate");
+
+						if (startDate != null && endDate != null) {
+							try {
+								Instant start = Instant.parse(startDate);
+								Instant end = Instant.parse(endDate);
+								if (end.isBefore(start)) {
+									resp.end(this.getUtils().getResponse(
+											Utils.ERR_400, "End date must be after start date").encode());
+									return;
+								}
+							} catch (Exception dateEx) {
+								resp.end(this.getUtils().getResponse(
+										Utils.ERR_400, "Invalid date format. Use ISO 8601 format").encode());
+								return;
+							}
+						}
+
+						// Save promotion
+						this.getUtils().assignRoleSaveFilters(xusr, body);
+						this.getDbUtils().save(Collections.PROMOTIONS.toString(), body, headers, resp);
+
+					} catch (final Exception e) {
+						this.logger.error(e.getMessage(), e);
+						resp.end(this.getUtils().getResponse(
+								Utils.ERR_502, e.getMessage()).encode());
+					}
+				}, "name", "type");
+	}
+
+	/**
+	 * Lists promotions with filtering support.
+	 * 
+	 * @param rc The routing context.
+	 */
+	@SystemTasks(task = MODULE + "listPromotions")
+	private void listPromotions(final RoutingContext rc) {
+		this.getUtils().execute2(MODULE + "listPromotions", rc,
+				(xusr, body, params, headers, resp) -> {
+					// Apply role-based query filters
+					this.getUtils().assignRoleQueryFilters(xusr, body, false);
+
+					this.getDbUtils().find(Collections.PROMOTIONS.toString(), body, resp);
+				});
+	}
+
+	/**
+	 * Updates a promotion.
+	 * 
+	 * @param rc The routing context.
+	 */
+	@SystemTasks(task = MODULE + "updatePromotion")
+	private void updatePromotion(final RoutingContext rc) {
+		this.getUtils().execute2(MODULE + "updatePromotion", rc,
+				(xusr, body, params, headers, resp) -> {
+					try {
+						// Remove _id from update body and set updatedAt
+						String promotionId = body.getString("_id");
+						body.remove("_id");
+						body.put("updatedAt", Instant.now().toString());
+
+						JsonObject query = new JsonObject()
+								.put("_id", promotionId);
+
+						// Apply role-based query filters
+						this.getUtils().assignRoleQueryFilters(xusr, query, false);
+
+						this.getDbUtils().update(Collections.PROMOTIONS.toString(), query, body, resp);
+
+					} catch (final Exception e) {
+						this.logger.error(e.getMessage(), e);
+						resp.end(this.getUtils().getResponse(
+								Utils.ERR_502, e.getMessage()).encode());
+					}
+				}, "_id");
+	}
+
+	/**
+	 * Deletes a promotion (soft delete).
+	 * 
+	 * @param rc The routing context.
+	 */
+	@SystemTasks(task = MODULE + "deletePromotion")
+	private void deletePromotion(final RoutingContext rc) {
+		this.getUtils().execute2(MODULE + "deletePromotion", rc,
+				(xusr, body, params, headers, resp) -> {
+					JsonObject query = new JsonObject()
+							.put("_id", body.getString("_id"));
+
+					// Apply role-based query filters
+					this.getUtils().assignRoleQueryFilters(xusr, query, false);
+
+					JsonObject update = new JsonObject()
+							.put("status", "deleted")
+							.put("deletedAt", Instant.now().toString())
+							.put("deletedBy", xusr.getString("_id"));
+
+					this.getDbUtils().update(Collections.PROMOTIONS.toString(), query, update, resp);
+				}, "_id");
+	}
+
+	/**
+	 * Applies a promotion to a listing.
+	 * 
+	 * @param rc The routing context.
+	 */
+	@SystemTasks(task = MODULE + "applyPromotionToListing")
+	private void applyPromotionToListing(final RoutingContext rc) {
+		this.getUtils().execute2(MODULE + "applyPromotionToListing", rc,
+				(xusr, body, params, headers, resp) -> {
+					try {
+						String listingId = body.getString("listingId");
+						String promotionId = body.getString("promotionId");
+
+						// Check if listing exists and user has access
+						JsonObject listingQuery = new JsonObject().put("_id", listingId);
+						this.getUtils().assignRoleQueryFilters(xusr, listingQuery, false);
+
+						this.getDbUtils().findOne(Collections.LISTINGS.toString(), listingQuery, listing -> {
+							if (listing == null || listing.isEmpty()) {
+								resp.end(this.getUtils().getResponse(
+										Utils.ERR_404, "Listing not found").encode());
+								return;
+							}
+
+							// Check if promotion exists and is active
+							JsonObject promotionQuery = new JsonObject()
+									.put("_id", promotionId)
+									.put("status", "active");
+							this.getUtils().assignRoleQueryFilters(xusr, promotionQuery, false);
+
+							this.getDbUtils().findOne(Collections.PROMOTIONS.toString(), promotionQuery, promotion -> {
+								if (promotion == null || promotion.isEmpty()) {
+									resp.end(this.getUtils().getResponse(
+											Utils.ERR_404, "Active promotion not found").encode());
+									return;
+								}
+
+								// Create listing-promotion relationship
+								JsonObject listingPromotion = new JsonObject()
+										.put("_id", UUID.randomUUID().toString())
+										.put("listingId", listingId)
+										.put("promotionId", promotionId)
+										.put("organizationId", xusr.getString("organisationId"))
+										.put("appliedBy", xusr.getString("_id"))
+										.put("appliedAt", Instant.now().toString())
+										.put("status", "active");
+
+								this.getUtils().assignRoleSaveFilters(xusr, listingPromotion);
+								this.getDbUtils().save(Collections.LISTING_PROMOTIONS.toString(),
+										listingPromotion, headers, resp);
+							}, resp);
+						}, resp);
+
+					} catch (final Exception e) {
+						this.logger.error(e.getMessage(), e);
+						resp.end(this.getUtils().getResponse(
+								Utils.ERR_502, e.getMessage()).encode());
+					}
+				}, "listingId", "promotionId");
+	}
+
+	/**
+	 * Removes a promotion from a listing.
+	 * 
+	 * @param rc The routing context.
+	 */
+	@SystemTasks(task = MODULE + "removePromotionFromListing")
+	private void removePromotionFromListing(final RoutingContext rc) {
+		this.getUtils().execute2(MODULE + "removePromotionFromListing", rc,
+				(xusr, body, params, headers, resp) -> {
+					JsonObject query = new JsonObject()
+							.put("listingId", body.getString("listingId"))
+							.put("promotionId", body.getString("promotionId"))
+							.put("status", "active");
+
+					this.getUtils().assignRoleQueryFilters(xusr, query, false);
+
+					JsonObject update = new JsonObject()
+							.put("status", "removed")
+							.put("removedAt", Instant.now().toString())
+							.put("removedBy", xusr.getString("_id"));
+
+					this.getDbUtils().update(Collections.LISTING_PROMOTIONS.toString(), query, update, resp);
+				}, "listingId", "promotionId");
+	}
+
+	// =============================================================================
+	// ADVANCED PRICING METHODS
+	// =============================================================================
+
+	/**
+	 * Calculates the effective price of a listing after applying discounts and
+	 * promotions.
+	 * 
+	 * @param rc The routing context.
+	 */
+	@SystemTasks(task = MODULE + "getListingEffectivePrice")
+	private void getListingEffectivePrice(final RoutingContext rc) {
+		this.getUtils().execute2(MODULE + "getListingEffectivePrice", rc,
+				(xusr, body, params, headers, resp) -> {
+					try {
+						String listingId = body.getString("listingId");
+
+						// Get listing
+						JsonObject listingQuery = new JsonObject().put("_id", listingId);
+						this.getUtils().assignRoleQueryFilters(xusr, listingQuery, false);
+
+						this.getDbUtils().findOne(Collections.LISTINGS.toString(), listingQuery, listing -> {
+							if (listing == null || listing.isEmpty()) {
+								resp.end(this.getUtils().getResponse(
+										Utils.ERR_404, "Listing not found").encode());
+								return;
+							}
+
+							Double baseAmount = listing.getDouble("amount");
+							if (baseAmount == null) {
+								resp.end(this.getUtils().getResponse(
+										Utils.ERR_400, "Listing has no amount set").encode());
+								return;
+							}
+
+							// Get active discounts for this listing
+							JsonObject discountQuery = new JsonObject()
+									.put("listingId", listingId)
+									.put("status", "active");
+
+							this.getDbUtils().find(Collections.LISTING_DISCOUNTS.toString(), discountQuery,
+									discountResults -> {
+										try {
+											JsonArray discounts = this.getDbUtils().getResultArray(discountResults);
+											Double effectivePrice = baseAmount;
+
+											// Apply discounts
+											for (int i = 0; i < discounts.size(); i++) {
+												JsonObject discountRelation = discounts.getJsonObject(i);
+												String discountId = discountRelation.getString("discountId");
+
+												// Get discount details (this would need to be optimized with
+												// aggregation in production)
+												JsonObject discountDetailQuery = new JsonObject().put("_id",
+														discountId);
+												// For simplicity, assuming we have discount details or would use
+												// aggregation
+												// This is a simplified calculation - in production you'd use MongoDB
+												// aggregation
+											}
+
+											// Get active promotions for this listing
+											JsonObject promotionQuery = new JsonObject()
+													.put("listingId", listingId)
+													.put("status", "active");
+
+											this.getDbUtils().find(Collections.LISTING_PROMOTIONS.toString(),
+													promotionQuery, promotionResults -> {
+														try {
+															JsonArray promotions = this.getDbUtils()
+																	.getResultArray(promotionResults);
+
+															JsonObject result = new JsonObject()
+																	.put("listingId", listingId)
+																	.put("baseAmount", baseAmount)
+																	.put("effectivePrice", effectivePrice)
+																	.put("discountsApplied", discounts.size())
+																	.put("promotionsApplied", promotions.size())
+																	.put("savings", baseAmount - effectivePrice);
+
+															resp.end(this.getUtils().getResponse(result).encode());
+
+														} catch (Exception e) {
+															this.logger.error(e.getMessage(), e);
+															resp.end(this.getUtils().getResponse(
+																	Utils.ERR_502, e.getMessage()).encode());
+														}
+													}, resp);
+
+										} catch (Exception e) {
+											this.logger.error(e.getMessage(), e);
+											resp.end(this.getUtils().getResponse(
+													Utils.ERR_502, e.getMessage()).encode());
+										}
+									}, resp);
+						}, resp);
+
+					} catch (final Exception e) {
+						this.logger.error(e.getMessage(), e);
+						resp.end(this.getUtils().getResponse(
+								Utils.ERR_502, e.getMessage()).encode());
+					}
+				}, "listingId");
+	}
+
+	/**
+	 * Lists listings that have active promotions.
+	 * 
+	 * @param rc The routing context.
+	 */
+	@SystemTasks(task = MODULE + "listListingsWithActivePromotions")
+	private void listListingsWithActivePromotions(final RoutingContext rc) {
+		this.getUtils().execute2(MODULE + "listListingsWithActivePromotions", rc,
+				(xusr, body, params, headers, resp) -> {
+					// Apply role-based query filters
+					this.getUtils().assignRoleQueryFilters(xusr, body, false);
+
+					// Query for listings that have active promotions
+					JsonObject promotionQuery = new JsonObject()
+							.put("status", "active");
+					this.getUtils().assignRoleQueryFilters(xusr, promotionQuery, false);
+
+					// This would ideally use aggregation to join listings with promotions
+					// For now, we'll get active promotion relationships and then fetch listings
+					this.getDbUtils().find(Collections.LISTING_PROMOTIONS.toString(), promotionQuery,
+							promotionResults -> {
+								try {
+									JsonArray promotions = this.getDbUtils().getResultArray(promotionResults);
+									JsonArray listingIds = new JsonArray();
+
+									for (int i = 0; i < promotions.size(); i++) {
+										JsonObject promotion = promotions.getJsonObject(i);
+										String listingId = promotion.getString("listingId");
+										if (!listingIds.contains(listingId)) {
+											listingIds.add(listingId);
+										}
+									}
+
+									if (listingIds.isEmpty()) {
+										resp.end(this.getUtils().getResponse(new JsonArray()).encode());
+										return;
+									}
+
+									// Get listings
+									JsonObject listingQuery = new JsonObject()
+											.put("_id", new JsonObject().put("$in", listingIds));
+									this.getUtils().assignRoleQueryFilters(xusr, listingQuery, false);
+
+									this.getDbUtils().find(Collections.LISTINGS.toString(), listingQuery, resp);
+
+								} catch (Exception e) {
+									this.logger.error(e.getMessage(), e);
+									resp.end(this.getUtils().getResponse(
+											Utils.ERR_502, e.getMessage()).encode());
+								}
+							}, resp);
 				});
 	}
 }
