@@ -4,14 +4,10 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
-import java.util.ArrayList;
-import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.utils.backend.models.Collections;
-import org.utils.backend.models.RbacTasks;
 import org.utils.backend.utils.SystemTasks;
-import org.utils.backend.utils.Utils;
 
 
 /**

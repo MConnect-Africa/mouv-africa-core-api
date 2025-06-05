@@ -9,7 +9,6 @@ import io.vertx.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.utils.backend.models.Collections;
-import org.utils.backend.models.HashPassword;
 import org.utils.backend.utils.IDBJsonObject;
 import org.utils.backend.utils.SystemTasks;
 import org.utils.backend.utils.Utils;
@@ -17,7 +16,7 @@ import org.utils.backend.utils.Utils;
 /**
  * The authentication service.
  */
-public class AuthService extends OrganisationService {
+public class AuthService extends ListingsService {
 
     /**
      * The logger instance that is used to log.
@@ -52,14 +51,14 @@ public class AuthService extends OrganisationService {
         router.post("/listinvites")
             .handler(this::listInvites);
 
-        this.serOrganisationService(router);
+        this.setListingsRoutes(router);
     }
 
     /**
      * Creates the user.
      * @param rc The router used to set paths.
      */
-    private void createUser(final RoutingContext rc){
+    private void createUser(final RoutingContext rc) {
         this.getUtils().execute3(MODULE + "createUser", rc,
             (xusr, body, params, headers, resp) -> {
 
@@ -71,7 +70,8 @@ public class AuthService extends OrganisationService {
                             this.getUtils().verifyUniqueUser(
                                 skey, body, headers, res -> {
                                     String role = invite.getString("role");
-                                    String orgId = invite.getString("organisationId");
+                                    String orgId = invite.getString(
+                                        "organisationId");
                                     if (role != null && !role.isEmpty()
                                     && !"client".equalsIgnoreCase(role)) {
                                         this.getUtils().setUserRoles(res, role);
@@ -81,7 +81,8 @@ public class AuthService extends OrganisationService {
                                         res.put("organisationId", orgId);
                                     }
                                     this.getDbUtils().save(
-                                        Collections.USERS.toString(), res, headers, resp);
+                                        Collections.USERS.toString(),
+                                    res, headers, resp);
                             }, resp);
                         }, resp);
                     } else {
@@ -103,6 +104,7 @@ public class AuthService extends OrganisationService {
     /**
      * Gets the invitation for the invited user.
      * @param body the body from the FE
+     * @param success The success callback
      * @param resp The server response.
      */
     private void getInvitation(final JsonObject body,
@@ -122,11 +124,11 @@ public class AuthService extends OrganisationService {
     }
 
     /**
-     * Confirms the MFA
+     * Confirms the MFA.
      * @param rc The router used to set paths.
      */
     @SystemTasks(task = MODULE + "confirmMultifactor")
-    private void confirmMultifactor(final RoutingContext rc){
+    private void confirmMultifactor(final RoutingContext rc) {
         JsonObject body = rc.getBodyAsJson();
         HttpServerResponse resp = rc.response();
         if (this.getUtils().isValid(body, "code", "email")) {
@@ -142,7 +144,7 @@ public class AuthService extends OrganisationService {
      * @param rc The routing context
      */
     @SystemTasks(task = MODULE + "listUsers")
-    private void listUsers(final RoutingContext rc){
+    private void listUsers(final RoutingContext rc) {
         this.getUtils().execute2(MODULE + "listUsers",
             rc, (xusr, body, params, headers, resp) -> {
             this.getUtils().assignRoleQueryFilters(xusr, body, true);
@@ -185,7 +187,7 @@ public class AuthService extends OrganisationService {
      * Updates the user details.
      * @param rc The router used to set paths.
      */
-    private void updateUserDetails(final RoutingContext rc){
+    private void updateUserDetails(final RoutingContext rc) {
         this.getUtils().execute2(MODULE + "updateUserDetails",
             rc, (xusr, body, params, headers, resp) -> {
             JsonObject qry = new JsonObject()
@@ -198,7 +200,8 @@ public class AuthService extends OrganisationService {
             body.remove("uid");
             body.remove("email");
 
-            this.getDbUtils().findOneAndUpdate(Collections.USERS.toString(), qry, body,
+            this.getDbUtils().findOneAndUpdate(
+                Collections.USERS.toString(), qry, body,
                 res -> {
                     // send Communication on passord update
                     resp.end(this.getUtils().getResponse(res).encode());
@@ -214,7 +217,7 @@ public class AuthService extends OrganisationService {
      * Updates the user roles.
      * @param rc The router used to set paths.
      */
-    private void updateUserRoles(final RoutingContext rc){
+    private void updateUserRoles(final RoutingContext rc) {
         this.getUtils().execute2(MODULE + "updateUserRoles",
             rc, (xusr, body, params, headers, resp) -> {
 
@@ -222,7 +225,8 @@ public class AuthService extends OrganisationService {
                 .put("_id", xusr.getString("_id", body.getString("_id")));
 
             this.getUtils().assignRoleQueryFilters(xusr, body, false);
-            this.getDbUtils().findOne(Collections.USERS.toString(), qry, res -> {
+            this.getDbUtils().findOne(
+                Collections.USERS.toString(), qry, res -> {
 
                 if (res == null || res.isEmpty()) {
                     resp.end(this.getUtils().getResponse(Utils.ERR_404,
@@ -271,7 +275,7 @@ public class AuthService extends OrganisationService {
      * @param rc The routing context
      */
     @SystemTasks(task = MODULE + "getUserDetails")
-    private void getUserDetails(final RoutingContext rc){
+    private void getUserDetails(final RoutingContext rc) {
         this.getUtils().execute2(MODULE + "getUserDetails",
             rc, (xusr, body, params, headers, resp) -> {
             body.put("uid", xusr.getString("uid"));
@@ -285,7 +289,7 @@ public class AuthService extends OrganisationService {
      * @param rc The routing context.
      */
     @SystemTasks(task = MODULE + "sendInvite")
-    private void sendInvite(final RoutingContext rc){
+    private void sendInvite(final RoutingContext rc) {
         this.getUtils().execute2(MODULE + "sendInvite",
             rc, (xusr, body, params, headers, resp) -> {
             String role = body.getString("role", "");
@@ -325,7 +329,7 @@ public class AuthService extends OrganisationService {
      * @param rc The routing context.
      */
     @SystemTasks(task = MODULE + "listInvites")
-    private void listInvites(final RoutingContext rc){
+    private void listInvites(final RoutingContext rc) {
         this.getUtils().execute3(MODULE + "listInvites",
             rc, (xusr, body, params, headers, resp) -> {
             JsonObject qry  = new JsonObject()
