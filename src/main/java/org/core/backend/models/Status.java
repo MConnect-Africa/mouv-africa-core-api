@@ -2,24 +2,24 @@
 package org.core.backend.models;
 
 /**
- * The status enum
+ * The status enum.
  */
 public enum Status {
 
     /**
-     * The active status
+     * The active status.
      */
     ACTIVE,
 
 
     /**
-     * The pending status
+     * The pending status.
      */
     PENDING,
 
 
     /**
-     * The pending status
+     * The disabled status.
      */
     DISABLED,
 

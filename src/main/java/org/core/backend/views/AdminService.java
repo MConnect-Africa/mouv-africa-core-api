@@ -3,16 +3,16 @@ package org.core.backend.views;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import java.util.List;
+import org.core.backend.models.Collections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import io.vertx.ext.web.Router;
 import org.utils.backend.utils.SystemTasks;
-
-import org.core.backend.models.Collections;
 import org.utils.backend.utils.Utils;
+
+
 
 public class AdminService extends RbacService {
 
@@ -46,7 +46,7 @@ public class AdminService extends RbacService {
 
     /**
      * Create the document types.
-     * 
+     *
      * @param rc The routing context.
      */
     @SystemTasks(task = MODULE + "createDocumentTypes")
@@ -54,14 +54,15 @@ public class AdminService extends RbacService {
         this.getUtils().execute2(MODULE + "createDocumentTypes", rc,
                 (usr, body, params, headers, resp) -> {
 
-                    this.getDbUtils().save(Collections.DOCUMENT_TYPES.toString(),
-                            body, headers, resp);
+                    this.getDbUtils().save(
+                        Collections.DOCUMENT_TYPES.toString(),
+                        body, headers, resp);
                 }, "name");
     }
 
     /**
      * Lists the document types.
-     * 
+     *
      * @param rc The routing context.
      */
     @SystemTasks(task = MODULE + "listDocumentTypes")
@@ -76,7 +77,7 @@ public class AdminService extends RbacService {
 
     /**
      * Adds the new product.
-     * 
+     *
      * @param rc The rouuting context
      */
     private void addNewProducts(final RoutingContext rc) {
@@ -90,7 +91,7 @@ public class AdminService extends RbacService {
 
     /**
      * Assign Products to an Organisation the new product.
-     * 
+     *
      * @param rc The rouuting context
      */
     private void assignOrganisationNewProducts(final RoutingContext rc) {
@@ -102,10 +103,11 @@ public class AdminService extends RbacService {
 
                                 if (res == null || res.isEmpty()) {
                                     resp.end(this.getUtils().getResponse(
-                                            Utils.ERR_404, "Product Not found").encode());
+                                        Utils.ERR_404,
+                                            "Product Not found").encode());
                                 } else {
                                     this.assignOrganisationNewProducts(
-                                            usr, body, res, resp);
+                                        usr, body, res, resp);
                                 }
                             }, resp);
                 });
@@ -113,14 +115,14 @@ public class AdminService extends RbacService {
 
     /**
      * Assigns new products to an organisation.
-     * 
      * @param xusr     The current user object
      * @param body     The body from the FE
+     * @param resp The server response.
      * @param products The product
      */
     protected void assignOrganisationNewProducts(final JsonObject xusr,
-            final JsonObject body, final List<JsonObject> products,
-            final HttpServerResponse resp) {
+        final JsonObject body, final List<JsonObject> products,
+        final HttpServerResponse resp) {
 
         try {
 
@@ -128,18 +130,19 @@ public class AdminService extends RbacService {
             for (int i = 0; i < products.size(); i++) {
                 JsonObject product = products.get(i);
                 if (product != null && !product.isEmpty()) {
-                    product
-                            .put("organisationId", body.getString("organisationId"))
-                            .put("isActive", true);
+                    product.put("organisationId",
+                        body.getString("organisationId"))
+                        .put("isActive", true);
 
                     product.remove("_id");
                     product.put("_id", body.getString("organisationId", "")
-                            + product.getString("name"));
+                        + product.getString("name"));
 
-                    this.getDbUtils().save(Collections.ORGANISATION_PRODUCTS.toString(),
-                            product, null, () -> {
+                    this.getDbUtils().save(
+                        Collections.ORGANISATION_PRODUCTS.toString(),
+                        product, null, () -> {
                                 res.add(product);
-                            }, resp);
+                        }, resp);
                 }
             }
 
@@ -153,25 +156,25 @@ public class AdminService extends RbacService {
 
     /**
      * Lists the side bar services for organisations.
-     * 
+     *
      * @param rc The routng context.
      */
     protected void listSideBarServices(final RoutingContext rc) {
         this.getUtils().execute2(MODULE + "assignOrganisationNewProducts", rc,
-                (usr, body, params, headers, resp) -> {
+        (usr, body, params, headers, resp) -> {
 
-                    body.put("isActive", true);
-                    this.getUtils().assignRoleQueryFilters(usr, body, false);
+                body.put("isActive", true);
+                this.getUtils().assignRoleQueryFilters(usr, body, false);
 
-                    this.getDbUtils().distinctWithQuery(
-                            Collections.ORGANISATION_PRODUCTS.toString(),
-                            "name", String.class.getName(), body, res -> {
-                                resp.end(this.getDbUtils().getResponse(res).encode());
-                            }, fail -> {
-                                resp.end(this.getUtils().getResponse(
-                                        Utils.ERR_502, fail.getMessage()).encode());
-                                this.logger.error(fail.getMessage(), fail);
-                            });
+                this.getDbUtils().distinctWithQuery(
+                        Collections.ORGANISATION_PRODUCTS.toString(),
+                        "name", String.class.getName(), body, res -> {
+                        resp.end(this.getDbUtils().getResponse(res).encode());
+                }, fail -> {
+                        resp.end(this.getUtils().getResponse(
+                                Utils.ERR_502, fail.getMessage()).encode());
+                        this.logger.error(fail.getMessage(), fail);
                 });
+        });
     }
 }

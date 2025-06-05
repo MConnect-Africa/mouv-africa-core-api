@@ -1,16 +1,14 @@
 package org.core.backend.views;
 
-import io.vertx.core.http.HttpServerResponse;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import java.time.Instant;
 import java.util.UUID;
+import org.core.backend.models.Collections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.utils.backend.utils.SystemTasks;
-import org.core.backend.models.Collections;
 import org.utils.backend.utils.Utils;
 
 /**
@@ -24,7 +22,7 @@ public class ListingsService extends OrganisationService {
 	 * The logger instance that is used to log.
 	 */
 	private Logger logger = LoggerFactory.getLogger(
-			ListingsService.class.getName());
+		ListingsService.class.getName());
 
 	/**
 	 * Sets routes for the HTTP server.
@@ -36,126 +34,126 @@ public class ListingsService extends OrganisationService {
 
 		// Listing management routes
 		router.post("/createListing")
-				.handler(this::createListing);
+			.handler(this::createListing);
 		router.post("/listListings")
-				.handler(this::listListings);
+			.handler(this::listListings);
 		router.post("/getListing")
-				.handler(this::getListing);
+			.handler(this::getListing);
 		router.post("/updateListing")
-				.handler(this::updateListing);
+			.handler(this::updateListing);
 		router.post("/deleteListing")
-				.handler(this::deleteListing);
+			.handler(this::deleteListing);
 		router.post("/searchListings")
-				.handler(this::searchListings);
+			.handler(this::searchListings);
 
 		// Listing types management routes
 		router.post("/createListingType")
-				.handler(this::createListingType);
+			.handler(this::createListingType);
 		router.post("/listListingTypes")
-				.handler(this::listListingTypes);
+			.handler(this::listListingTypes);
 		router.post("/updateListingType")
-				.handler(this::updateListingType);
+			.handler(this::updateListingType);
 		router.post("/deleteListingType")
-				.handler(this::deleteListingType);
+			.handler(this::deleteListingType);
 
 		// Advanced listing operations
 		router.post("/listListingsByType")
-				.handler(this::listListingsByType);
+			.handler(this::listListingsByType);
 		router.post("/listListingsByUser")
-				.handler(this::listListingsByUser);
+			.handler(this::listListingsByUser);
 		router.post("/listListingsByOrganisation")
-				.handler(this::listListingsByOrganisation);
+			.handler(this::listListingsByOrganisation);
 
 		// Discount management routes
 		router.post("/createDiscount")
-				.handler(this::createDiscount);
+			.handler(this::createDiscount);
 		router.post("/listDiscounts")
-				.handler(this::listDiscounts);
+			.handler(this::listDiscounts);
 		router.post("/updateDiscount")
-				.handler(this::updateDiscount);
+			.handler(this::updateDiscount);
 		router.post("/deleteDiscount")
-				.handler(this::deleteDiscount);
+			.handler(this::deleteDiscount);
 		router.post("/applyDiscountToListing")
-				.handler(this::applyDiscountToListing);
+			.handler(this::applyDiscountToListing);
 		router.post("/removeDiscountFromListing")
-				.handler(this::removeDiscountFromListing);
+			.handler(this::removeDiscountFromListing);
 
 		// Promotion management routes
 		router.post("/createPromotion")
-				.handler(this::createPromotion);
+			.handler(this::createPromotion);
 		router.post("/listPromotions")
-				.handler(this::listPromotions);
+			.handler(this::listPromotions);
 		router.post("/updatePromotion")
-				.handler(this::updatePromotion);
+			.handler(this::updatePromotion);
 		router.post("/deletePromotion")
-				.handler(this::deletePromotion);
+			.handler(this::deletePromotion);
 		router.post("/applyPromotionToListing")
-				.handler(this::applyPromotionToListing);
+			.handler(this::applyPromotionToListing);
 		router.post("/removePromotionFromListing")
-				.handler(this::removePromotionFromListing);
+			.handler(this::removePromotionFromListing);
 
 		// Advanced pricing operations
 		router.post("/getListingEffectivePrice")
-				.handler(this::getListingEffectivePrice);
+			.handler(this::getListingEffectivePrice);
 		router.post("/listListingsWithActivePromotions")
-				.handler(this::listListingsWithActivePromotions);
+			.handler(this::listListingsWithActivePromotions);
 
 		// Call parent organization service routes
-		this.setAdminRoutes(router);
+		this.serOrganisationService(router);
+
 	}
 
 	/**
 	 * Creates a new listing with mandatory and custom fields.
-	 * 
 	 * @param rc The routing context.
 	 */
 	@SystemTasks(task = MODULE + "createListing")
 	private void createListing(final RoutingContext rc) {
 		this.getUtils().execute2(MODULE + "createListing", rc,
-				(xusr, body, params, headers, resp) -> {
-					try {
-						// Generate unique listing ID
-						String listingId = UUID.randomUUID().toString();
+		(xusr, body, params, headers, resp) -> {
+			try {
+				// Generate unique listing ID
+				// String listingId = UUID.randomUUID().toString();
 
-						// Add mandatory system fields
-						body.put("_id", listingId)
-								.put("organizationId", xusr.getString("organisationId"))
-								.put("userId", xusr.getString("_id"))
-								.put("createdAt", Instant.now().toString())
-								.put("updatedAt", Instant.now().toString())
-								.put("status", "active")
-								.put("views", 0)
-								.put("featured", false);
+				// Add mandatory system fields
+				body//.put("_id", listingId)
+					.put("organizationId", xusr.getString("organisationId"))
+					.put("userId", xusr.getString("_id"))
+					.put("createdAt", Instant.now().toString())
+					.put("updatedAt", Instant.now().toString())
+					.put("status", "active")
+					.put("views", 0)
+					.put("featured", false);
 
-						// Validate listing type exists
-						JsonObject typeQuery = new JsonObject()
-								.put("_id", body.getString("listingType"))
-								.put("organizationId", xusr.getString("organisationId"));
+				// Validate listing type exists
+				JsonObject typeQuery = new JsonObject()
+					.put("_id", body.getString("listingType"))
+					.put("organizationId", xusr.getString("organisationId"));
 
-						this.getDbUtils().findOne(Collections.LISTING_TYPES.toString(),
-								typeQuery, typeResult -> {
-									if (typeResult == null || typeResult.isEmpty()) {
-										resp.end(this.getUtils().getResponse(
-												Utils.ERR_404, "Listing type not found").encode());
-									} else {
-										// Save listing with all fields (including custom fields)
-										this.getUtils().assignRoleSaveFilters(xusr, body);
-										this.getDbUtils().save(Collections.LISTINGS.toString(),
-												body, headers, resp);
-									}
-								}, resp);
+				this.getDbUtils().findOne(Collections.LISTING_TYPES.toString(),
+					typeQuery, typeResult -> {
+						if (typeResult == null || typeResult.isEmpty()) {
+							resp.end(this.getUtils().getResponse(
+									Utils.ERR_404, "Listing type not found").encode());
+						} else {
+							// Save listing with all fields (including custom fields)
+							this.getUtils().assignRoleSaveFilters(xusr, body);
+							this.getDbUtils().save(Collections.LISTINGS.toString(),
+									body, headers, resp);
+						}
+					}, resp);
 
-					} catch (final Exception e) {
-						this.logger.error(e.getMessage(), e);
-						resp.end(this.getUtils().getResponse(
-								Utils.ERR_502, e.getMessage()).encode());
-					}
-				}, "listingType", "title", "amount");
+			} catch (final Exception e) {
+				this.logger.error(e.getMessage(), e);
+				resp.end(this.getUtils().getResponse(
+						Utils.ERR_502, e.getMessage()).encode());
+			}
+		}, "listingType", "title", "amount");
 	}
 
 	/**
 	 * Lists listings with filtering support.
-	 * 
+	 *
 	 * @param rc The routing context.
 	 */
 	@SystemTasks(task = MODULE + "listListings")
@@ -165,18 +163,13 @@ public class ListingsService extends OrganisationService {
 					// Apply role-based query filters
 					this.getUtils().assignRoleQueryFilters(xusr, body, false);
 
-					// Add default sorting by creation date
-					if (!body.containsKey("sort")) {
-						body.put("sort", new JsonObject().put("createdAt", -1));
-					}
-
 					this.getDbUtils().find(Collections.LISTINGS.toString(), body, resp);
 				});
 	}
 
 	/**
 	 * Gets a specific listing by ID.
-	 * 
+	 *
 	 * @param rc The routing context.
 	 */
 	@SystemTasks(task = MODULE + "getListing")
@@ -184,7 +177,7 @@ public class ListingsService extends OrganisationService {
 		this.getUtils().execute2(MODULE + "getListing", rc,
 				(xusr, body, params, headers, resp) -> {
 					JsonObject query = new JsonObject()
-							.put("_id", body.getString("_id"));
+						.put("_id", body.getString("_id"));
 
 					// Apply role-based query filters
 					this.getUtils().assignRoleQueryFilters(xusr, query, false);
@@ -207,7 +200,6 @@ public class ListingsService extends OrganisationService {
 
 	/**
 	 * Updates a listing while preserving custom fields.
-	 * 
 	 * @param rc The routing context.
 	 */
 	@SystemTasks(task = MODULE + "updateListing")
@@ -217,18 +209,18 @@ public class ListingsService extends OrganisationService {
 					try {
 						// Prepare update data by removing system fields that shouldn't be updated
 						JsonObject updateData = body.copy();
-						updateData.remove("organizationId")
-								.remove("userId")
-								.remove("createdAt")
-								.remove("views")
-								.remove("_id");
+						updateData.remove("organizationId");
+						updateData.remove("userId");
+						updateData.remove("createdAt");
+						updateData.remove("views");
+						updateData.remove("_id");
 
 						// Add system update timestamp
 						updateData.put("updatedAt", Instant.now().toString());
 
 						// Build query with ownership validation
 						JsonObject query = new JsonObject()
-								.put("_id", body.getString("_id"));
+							.put("_id", body.getString("_id"));
 
 						// Apply role-based filters (users can only update their own listings)
 						this.getUtils().assignRoleQueryFilters(xusr, query, false);
@@ -244,23 +236,28 @@ public class ListingsService extends OrganisationService {
 								result -> {
 									if (result == null || result.isEmpty()) {
 										resp.end(this.getUtils().getResponse(
-												Utils.ERR_404, "Listing not found or access denied").encode());
+												Utils.ERR_404,
+										"Listing not found or access denied").encode());
 									} else {
 										resp.end(this.getUtils().getResponse(result).encode());
 									}
-								}, resp);
+								}, fail -> {
+									this.logger.error(fail.getMessage(), fail);
+									resp.end(this.getUtils().getResponse(
+										Utils.ERR_502, fail.getMessage()).encode());
+								});
 
 					} catch (final Exception e) {
 						this.logger.error(e.getMessage(), e);
 						resp.end(this.getUtils().getResponse(
-								Utils.ERR_502, e.getMessage()).encode());
+							Utils.ERR_502, e.getMessage()).encode());
 					}
 				}, "_id");
 	}
 
 	/**
 	 * Deletes a listing (soft delete by setting status to inactive).
-	 * 
+	 *
 	 * @param rc The routing context.
 	 */
 	@SystemTasks(task = MODULE + "deleteListing")
@@ -279,101 +276,103 @@ public class ListingsService extends OrganisationService {
 					}
 
 					JsonObject update = new JsonObject()
-							.put("$set", new JsonObject()
-									.put("status", "inactive")
-									.put("deletedAt", Instant.now().toString())
-									.put("deletedBy", xusr.getString("_id")));
+						.put("$set", new JsonObject()
+							.put("status", "inactive")
+							.put("deletedAt", Instant.now().toString())
+							.put("deletedBy", xusr.getString("_id")));
 
 					this.getDbUtils().findOneAndUpdate(Collections.LISTINGS.toString(),
-							query, update,
-							result -> {
+							query, update, result -> {
 								if (result == null || result.isEmpty()) {
 									resp.end(this.getUtils().getResponse(
-											Utils.ERR_404, "Listing not found or access denied").encode());
+										Utils.ERR_404, "Listing not found or access denied").encode());
 								} else {
 									resp.end(this.getUtils().getResponse(
-											new JsonObject().put("message", "Listing deleted successfully")).encode());
+										new JsonObject().put("message", "Listing deleted successfully")).encode());
 								}
-							}, resp);
+							}, fail -> {
+								this.logger.error(fail.getMessage(), fail);
+								resp.end(this.getUtils().getResponse(
+									Utils.ERR_502, fail.getMessage()).encode());
+							});
 				}, "_id");
 	}
 
 	/**
 	 * Searches listings with support for custom fields.
-	 * 
 	 * @param rc The routing context.
 	 */
 	@SystemTasks(task = MODULE + "searchListings")
 	private void searchListings(final RoutingContext rc) {
 		this.getUtils().execute2(MODULE + "searchListings", rc,
-				(xusr, body, params, headers, resp) -> {
-					// Apply role-based query filters
-					this.getUtils().assignRoleQueryFilters(xusr, body, false);
+			(xusr, body, params, headers, resp) -> {
+				// Apply role-based query filters
+				this.getUtils().assignRoleQueryFilters(
+					xusr, body, false);
 
-					// Add search functionality for custom fields
-					this.getUtils().addFieldsToSearchQuery(body);
+				// Add search functionality for custom fields
+				this.getUtils().addFieldsToSearchQuery(body);
 
-					// Default to active listings only
-					if (!body.containsKey("status")) {
-						body.put("status", "active");
-					}
+				// Default to active listings only
+				if (!body.containsKey("status")) {
+					body.put("status", "active");
+				}
 
-					// Add default sorting by relevance and date
-					if (!body.containsKey("sort")) {
-						body.put("sort", new JsonObject()
-								.put("featured", -1)
-								.put("createdAt", -1));
-					}
+				// Add default sorting by relevance and date
+				if (!body.containsKey("sort")) {
+					body.put("sort", new JsonObject()
+						.put("featured", -1)
+						.put("createdAt", -1));
+				}
 
-					this.getDbUtils().find(Collections.LISTINGS.toString(), body, resp);
-				}, "searchTerm", "fieldsToSearchFor");
+			this.getDbUtils().find(Collections.LISTINGS.toString(), body, resp);
+			}, "searchTerm", "fieldsToSearchFor");
 	}
 
 	/**
 	 * Creates a new listing type.
-	 * 
+	 *
 	 * @param rc The routing context.
 	 */
 	@SystemTasks(task = MODULE + "createListingType")
 	private void createListingType(final RoutingContext rc) {
 		this.getUtils().execute2(MODULE + "createListingType", rc,
-				(xusr, body, params, headers, resp) -> {
-					// Add system fields
-					body.put("organizationId", xusr.getString("organisationId"))
-							.put("createdBy", xusr.getString("_id"))
-							.put("createdAt", Instant.now().toString())
-							.put("updatedAt", Instant.now().toString())
-							.put("isActive", true);
+			(xusr, body, params, headers, resp) -> {
+				// Add system fields
+				body.put("organizationId", xusr.getString("organisationId"))
+					.put("createdBy", xusr.getString("_id"))
+					.put("createdAt", Instant.now().toString())
+					.put("updatedAt", Instant.now().toString())
+					.put("isActive", true);
 
-					this.getUtils().assignRoleSaveFilters(xusr, body);
-					this.getDbUtils().save(Collections.LISTING_TYPES.toString(),
-							body, headers, resp);
-				}, "name", "description");
+				this.getUtils().assignRoleSaveFilters(xusr, body);
+				this.getDbUtils().save(Collections.LISTING_TYPES.toString(),
+					body, headers, resp);
+			}, "name", "description");
 	}
 
 	/**
 	 * Lists listing types.
-	 * 
 	 * @param rc The routing context.
 	 */
 	@SystemTasks(task = MODULE + "listListingTypes")
 	private void listListingTypes(final RoutingContext rc) {
 		this.getUtils().execute2(MODULE + "listListingTypes", rc,
-				(xusr, body, params, headers, resp) -> {
-					this.getUtils().assignRoleQueryFilters(xusr, body, false);
+		(xusr, body, params, headers, resp) -> {
+			this.getUtils().assignRoleQueryFilters(xusr, body, false);
 
-					// Default to active types only
-					if (!body.containsKey("isActive")) {
-						body.put("isActive", true);
-					}
+			// Default to active types only
+			if (!body.containsKey("isActive")) {
+				body.put("isActive", true);
+			}
 
-					this.getDbUtils().find(Collections.LISTING_TYPES.toString(), body, resp);
-				});
+			this.getDbUtils().find(Collections.LISTING_TYPES.toString(), body, resp);
+		});
 	}
 
 	/**
 	 * Updates a listing type.
-	 * 
+	 *
 	 * @param rc The routing context.
 	 */
 	@SystemTasks(task = MODULE + "updateListingType")
@@ -395,7 +394,7 @@ public class ListingsService extends OrganisationService {
 
 	/**
 	 * Deletes a listing type (soft delete).
-	 * 
+	 *
 	 * @param rc The routing context.
 	 */
 	@SystemTasks(task = MODULE + "deleteListingType")
@@ -419,7 +418,7 @@ public class ListingsService extends OrganisationService {
 
 	/**
 	 * Lists listings by specific type.
-	 * 
+	 *
 	 * @param rc The routing context.
 	 */
 	@SystemTasks(task = MODULE + "listListingsByType")
@@ -443,7 +442,7 @@ public class ListingsService extends OrganisationService {
 
 	/**
 	 * Lists listings by specific user.
-	 * 
+	 *
 	 * @param rc The routing context.
 	 */
 	@SystemTasks(task = MODULE + "listListingsByUser")
@@ -471,7 +470,7 @@ public class ListingsService extends OrganisationService {
 
 	/**
 	 * Lists listings by organization.
-	 * 
+	 *
 	 * @param rc The routing context.
 	 */
 	@SystemTasks(task = MODULE + "listListingsByOrganisation")
@@ -493,7 +492,7 @@ public class ListingsService extends OrganisationService {
 
 	/**
 	 * Helper method to increment listing view count.
-	 * 
+	 *
 	 * @param listingId The listing ID to increment views for.
 	 */
 	private void incrementListingViews(final String listingId) {
@@ -518,7 +517,7 @@ public class ListingsService extends OrganisationService {
 
 	/**
 	 * Creates a new discount.
-	 * 
+	 *
 	 * @param rc The routing context.
 	 */
 	@SystemTasks(task = MODULE + "createDiscount")
@@ -542,32 +541,31 @@ public class ListingsService extends OrganisationService {
 						Double discountValue = body.getDouble("value");
 
 						if (discountValue == null || discountValue <= 0) {
-							resp.end(this.getUtils().getResponse(
-									Utils.ERR_400, "Discount value must be greater than 0").encode());
-							return;
+							resp.end(this.getUtils().getResponse(Utils.ERR_502,
+								"Discount value must be greater than 0").encode());
 						}
 
 						if ("percentage".equals(discountType) && discountValue > 100) {
-							resp.end(this.getUtils().getResponse(
-									Utils.ERR_400, "Percentage discount cannot exceed 100%").encode());
-							return;
+							resp.end(this.getUtils().getResponse(Utils.ERR_502,
+								"Percentage discount cannot exceed 100%").encode());
 						}
 
 						// Save discount
 						this.getUtils().assignRoleSaveFilters(xusr, body);
-						this.getDbUtils().save(Collections.DISCOUNTS.toString(), body, headers, resp);
+						this.getDbUtils().save(Collections.DISCOUNTS.toString(),
+							body, headers, resp);
 
 					} catch (final Exception e) {
 						this.logger.error(e.getMessage(), e);
 						resp.end(this.getUtils().getResponse(
-								Utils.ERR_502, e.getMessage()).encode());
+							Utils.ERR_502, e.getMessage()).encode());
 					}
 				}, "name", "type", "value");
 	}
 
 	/**
 	 * Lists discounts with filtering support.
-	 * 
+	 *
 	 * @param rc The routing context.
 	 */
 	@SystemTasks(task = MODULE + "listDiscounts")
@@ -583,7 +581,7 @@ public class ListingsService extends OrganisationService {
 
 	/**
 	 * Updates a discount.
-	 * 
+	 *
 	 * @param rc The routing context.
 	 */
 	@SystemTasks(task = MODULE + "updateDiscount")
@@ -614,7 +612,7 @@ public class ListingsService extends OrganisationService {
 
 	/**
 	 * Deletes a discount (soft delete).
-	 * 
+	 *
 	 * @param rc The routing context.
 	 */
 	@SystemTasks(task = MODULE + "deleteDiscount")
@@ -638,7 +636,7 @@ public class ListingsService extends OrganisationService {
 
 	/**
 	 * Applies a discount to a listing.
-	 * 
+	 *
 	 * @param rc The routing context.
 	 */
 	@SystemTasks(task = MODULE + "applyDiscountToListing")
@@ -699,7 +697,7 @@ public class ListingsService extends OrganisationService {
 
 	/**
 	 * Removes a discount from a listing.
-	 * 
+	 *
 	 * @param rc The routing context.
 	 */
 	@SystemTasks(task = MODULE + "removeDiscountFromListing")
@@ -728,7 +726,7 @@ public class ListingsService extends OrganisationService {
 
 	/**
 	 * Creates a new promotion.
-	 * 
+	 *
 	 * @param rc The routing context.
 	 */
 	@SystemTasks(task = MODULE + "createPromotion")
@@ -781,7 +779,7 @@ public class ListingsService extends OrganisationService {
 
 	/**
 	 * Lists promotions with filtering support.
-	 * 
+	 *
 	 * @param rc The routing context.
 	 */
 	@SystemTasks(task = MODULE + "listPromotions")
@@ -797,7 +795,7 @@ public class ListingsService extends OrganisationService {
 
 	/**
 	 * Updates a promotion.
-	 * 
+	 *
 	 * @param rc The routing context.
 	 */
 	@SystemTasks(task = MODULE + "updatePromotion")
@@ -828,7 +826,7 @@ public class ListingsService extends OrganisationService {
 
 	/**
 	 * Deletes a promotion (soft delete).
-	 * 
+	 *
 	 * @param rc The routing context.
 	 */
 	@SystemTasks(task = MODULE + "deletePromotion")
@@ -852,7 +850,7 @@ public class ListingsService extends OrganisationService {
 
 	/**
 	 * Applies a promotion to a listing.
-	 * 
+	 *
 	 * @param rc The routing context.
 	 */
 	@SystemTasks(task = MODULE + "applyPromotionToListing")
@@ -913,7 +911,7 @@ public class ListingsService extends OrganisationService {
 
 	/**
 	 * Removes a promotion from a listing.
-	 * 
+	 *
 	 * @param rc The routing context.
 	 */
 	@SystemTasks(task = MODULE + "removePromotionFromListing")
@@ -943,7 +941,7 @@ public class ListingsService extends OrganisationService {
 	/**
 	 * Calculates the effective price of a listing after applying discounts and
 	 * promotions.
-	 * 
+	 *
 	 * @param rc The routing context.
 	 */
 	@SystemTasks(task = MODULE + "getListingEffectivePrice")
@@ -1005,15 +1003,14 @@ public class ListingsService extends OrganisationService {
 											this.getDbUtils().find(Collections.LISTING_PROMOTIONS.toString(),
 													promotionQuery, promotionResults -> {
 														try {
-															JsonArray promotions = this.getDbUtils()
-																	.getResultArray(promotionResults);
+
 
 															JsonObject result = new JsonObject()
 																	.put("listingId", listingId)
 																	.put("baseAmount", baseAmount)
 																	.put("effectivePrice", effectivePrice)
 																	.put("discountsApplied", discounts.size())
-																	.put("promotionsApplied", promotions.size())
+																	.put("promotionsApplied", promotionResults.size())
 																	.put("savings", baseAmount - effectivePrice);
 
 															resp.end(this.getUtils().getResponse(result).encode());
@@ -1043,55 +1040,60 @@ public class ListingsService extends OrganisationService {
 
 	/**
 	 * Lists listings that have active promotions.
-	 * 
+	 *
 	 * @param rc The routing context.
 	 */
 	@SystemTasks(task = MODULE + "listListingsWithActivePromotions")
 	private void listListingsWithActivePromotions(final RoutingContext rc) {
 		this.getUtils().execute2(MODULE + "listListingsWithActivePromotions", rc,
-				(xusr, body, params, headers, resp) -> {
-					// Apply role-based query filters
-					this.getUtils().assignRoleQueryFilters(xusr, body, false);
+			(xusr, body, params, headers, resp) -> {
+				// Apply role-based query filters
+				this.getUtils().assignRoleQueryFilters(xusr, body, false);
 
-					// Query for listings that have active promotions
-					JsonObject promotionQuery = new JsonObject()
-							.put("status", "active");
-					this.getUtils().assignRoleQueryFilters(xusr, promotionQuery, false);
+				// Query for listings that have active promotions
+				JsonObject promotionQuery = new JsonObject()
+					.put("status", "active");
+				this.getUtils().assignRoleQueryFilters(xusr, promotionQuery, false);
 
 					// This would ideally use aggregation to join listings with promotions
 					// For now, we'll get active promotion relationships and then fetch listings
-					this.getDbUtils().find(Collections.LISTING_PROMOTIONS.toString(), promotionQuery,
-							promotionResults -> {
-								try {
-									JsonArray promotions = this.getDbUtils().getResultArray(promotionResults);
-									JsonArray listingIds = new JsonArray();
+					this.getDbUtils().find(
+						Collections.LISTING_PROMOTIONS.toString(), promotionQuery,
+						promotionResults -> {
+						try {
+							JsonArray promotions
+								= this.getDbUtils().getResultArray(promotionResults);
+							JsonArray listingIds = new JsonArray();
 
-									for (int i = 0; i < promotions.size(); i++) {
-										JsonObject promotion = promotions.getJsonObject(i);
-										String listingId = promotion.getString("listingId");
-										if (!listingIds.contains(listingId)) {
-											listingIds.add(listingId);
-										}
+							for (int i = 0; i < promotions.size(); i++) {
+								JsonObject promotion = promotions.getJsonObject(i);
+								String listingId = promotion.getString("listingId");
+									if (!listingIds.contains(listingId)) {
+										listingIds.add(listingId);
 									}
-
-									if (listingIds.isEmpty()) {
-										resp.end(this.getUtils().getResponse(new JsonArray()).encode());
-										return;
-									}
-
-									// Get listings
-									JsonObject listingQuery = new JsonObject()
-											.put("_id", new JsonObject().put("$in", listingIds));
-									this.getUtils().assignRoleQueryFilters(xusr, listingQuery, false);
-
-									this.getDbUtils().find(Collections.LISTINGS.toString(), listingQuery, resp);
-
-								} catch (Exception e) {
-									this.logger.error(e.getMessage(), e);
-									resp.end(this.getUtils().getResponse(
-											Utils.ERR_502, e.getMessage()).encode());
 								}
-							}, resp);
+
+								if (listingIds.isEmpty()) {
+									resp.end(this.getUtils().getResponse(new JsonArray()).encode());
+									return;
+								}
+
+								// Get listings
+								JsonObject listingQuery = new JsonObject()
+									.put("_id", new JsonObject().put("$in", listingIds));
+								this.getUtils().assignRoleQueryFilters(
+									xusr, listingQuery, false);
+
+								this.getDbUtils().find(
+									Collections.LISTINGS.toString(), listingQuery, resp);
+
+							} catch (Exception e) {
+								this.logger.error(e.getMessage(), e);
+								resp.end(this.getUtils().getResponse(
+									Utils.ERR_502,
+									e.getMessage()).encode());
+							}
+						}, resp);
 				});
 	}
 }

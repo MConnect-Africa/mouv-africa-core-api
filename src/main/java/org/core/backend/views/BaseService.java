@@ -1,6 +1,5 @@
 package org.core.backend.views;
 
-import io.grpc.stub.StreamObserver;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
@@ -11,13 +10,9 @@ import java.lang.reflect.Method;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.utils.backend.utils.*;
-
-import org.core.backend.models.Collections;
-import okhttp3.FormBody;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
+import org.utils.backend.utils.DBUtils;
+import org.utils.backend.utils.SystemTasks;
+import org.utils.backend.utils.Utils;
 
 /**
  * The base service.
@@ -28,64 +23,58 @@ public class BaseService extends AbstractVerticle {
      * The logger instance that is used to log.
      */
     private Logger logger = LoggerFactory.getLogger(
-            BaseService.class.getName());
+        BaseService.class.getName());
+
 
     /**
-     * The identity management.
+     * The db utils instance.
      */
-    private IdentityManagement identityManagement;
-
     private DBUtils dbUtils;
 
-    private AuthUtils authUtils;
-
+    /**
+     * The utils instance.
+     */
     private Utils utils;
 
+    /**
+     * The module name.
+     */
     public static final String MODULE = "auth-";
 
+    /**
+     * Sets the db utils.
+     * @param vertx The vertx instance.
+     */
     public void setDBUtils(final Vertx vertx) {
         this.dbUtils = new DBUtils();
     }
 
-    public void setAuthUtils(final AuthUtils authUtils,
-            final DBUtils dbUtilsInstance, final Utils utilsInstance) {
-        // this.getUtils().setSmsUtils(new SMSUtils(dbUtilsInstance, utilsInstance));
-    }
-
+    /**
+     * Gets the database utils instance.
+     * @return the db utils inatance
+     */
     public DBUtils getDbUtils() {
         return this.dbUtils;
     }
 
+    /**
+     * Gets the utils instance.
+     * @return the utils instance.
+     */
     public Utils getUtils() {
         return this.utils;
     }
 
+    /**
+     * Sets the genera utils.
+     * @param ut The utils instance.
+     */
     public void setUtils(final Utils ut) {
         this.utils = ut;
     }
 
     /**
-     * Sets the identityManagement.
-     * 
-     * @param iManagement The identityManagement.
-     */
-    public void setIdentityManagement(
-            final IdentityManagement iManagement) {
-        this.identityManagement = iManagement;
-    }
-
-    /**
-     * Gets the identity management.
-     * 
-     * @return identityManagement.
-     */
-    public IdentityManagement getIdentityManagement() {
-        return this.identityManagement;
-    }
-
-    /**
      * Sets routes for the http server.
-     * 
      * @param router The router used to set paths.
      */
     protected void setBaseRoutes(final Router router) {
@@ -95,7 +84,6 @@ public class BaseService extends AbstractVerticle {
 
     /**
      * Pings the server.
-     * 
      * @param rc The routing context that handles http requests and responses.
      */
     private void ping(final RoutingContext rc) {
@@ -111,51 +99,48 @@ public class BaseService extends AbstractVerticle {
 
     /**
      * Lists the tasks.
-     * 
      * @param rc The routing context.
      */
     @SystemTasks(task = MODULE + "listTasks")
     private void listTasks(final RoutingContext rc) {
         this.getUtils().execute3(MODULE + "listTasks", rc,
-                (xusr, body, params, headers, resp) -> {
-                    try {
-                        resp.end(getUtils().getResponse(
-                                listTasks()).encode());
-                    } catch (Exception e) {
-                        logger.error(e.getMessage(), e);
-                        resp.end(getUtils().getResponse(
-                                Utils.ERR_502, e.getMessage()).encode());
-                    }
-                });
+            (xusr, body, params, headers, resp) -> {
+                try {
+                    resp.end(getUtils().getResponse(
+                            listTasks()).encode());
+                } catch (Exception e) {
+                    logger.error(e.getMessage(), e);
+                    resp.end(getUtils().getResponse(
+                            Utils.ERR_502, e.getMessage()).encode());
+                }
+            });
     }
 
     /**
      * Lists rbac tasks.
-     * 
      * @return The json array representing the tasks.
      */
     protected JsonArray listTasks() {
         JsonArray rst = new JsonArray();
         this.addRbacTasks(rst,
-                MainService.class.getDeclaredMethods());
+            MainService.class.getDeclaredMethods());
         this.addRbacTasks(rst,
-                AuthService.class.getDeclaredMethods());
+            AuthService.class.getDeclaredMethods());
         this.addRbacTasks(rst,
-                ListingsService.class.getDeclaredMethods());
+            ListingsService.class.getDeclaredMethods());
         this.addRbacTasks(rst,
-                AdminService.class.getDeclaredMethods());
+            AdminService.class.getDeclaredMethods());
         this.addRbacTasks(rst,
-                PaymentsService.class.getDeclaredMethods());
+            PaymentsService.class.getDeclaredMethods());
         this.addRbacTasks(rst,
-                BaseService.class.getDeclaredMethods());
+            BaseService.class.getDeclaredMethods());
 
         return rst;
     }
 
     /**
      * Adds rbac tasks to the json array.
-     * 
-     * @param rst     The json array result.
+     * @param rst The json array result.
      * @param methods The array of methods.
      */
     private void addRbacTasks(final JsonArray rst, final Method[] methods) {
