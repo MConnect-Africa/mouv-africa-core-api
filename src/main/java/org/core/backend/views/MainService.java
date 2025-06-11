@@ -1,15 +1,9 @@
 package org.core.backend.views;
 
-import io.vertx.core.json.JsonObject;
-import io.vertx.core.net.JksOptions;
-import io.vertx.core.net.PfxOptions;
 import io.vertx.ext.web.RoutingContext;
-import org.core.backend.views.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.utils.backend.utils.AuthUtils;
 import org.utils.backend.models.Collections;
-import org.utils.backend.utils.IdentityManagement;
 import org.utils.backend.utils.SystemTasks;
 import org.utils.backend.utils.Utils;
 
@@ -20,7 +14,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
-import io.vertx.core.http.HttpServerOptions;
+// import io.vertx.core.http.HttpServerOptions;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
@@ -66,16 +60,12 @@ public class MainService extends AuthService {
         try {
             // Start the http server.
             this.startHttpServer(this.serverPort,
-                    new Handler<AsyncResult<HttpServer>>() {
-
-                        @Override
-                        public void handle(final AsyncResult<HttpServer> event) {
-                            if (event.failed()) {
-                                logger.error("Server start failed!",
-                                        event.cause());
-                            }
-                        }
-                    });
+                event -> {
+                    if (event.failed()) {
+                        logger.error("Server start failed!",
+                                event.cause());
+                    }
+                });
         } catch (Exception e) {
             this.logger.error(e.getMessage(), e);
         }
@@ -119,26 +109,6 @@ public class MainService extends AuthService {
         this.setDBUtils(this.vertx);
         this.setUtils(new Utils(() -> {
         }));
-        // this.setIdentityManagement(new IdentityManagement(this.getDbUtils()));
-        // HttpServerOptions opts = new HttpServerOptions();
-        // if (customport < 8000) {
-        // this.vertx.createHttpServer()
-        // .requestHandler(router)
-        // .listen(customport, handler);
-
-        // } else {
-        // JksOptions jksOptions = new JksOptions()
-        // .setPath(Utils.KEYSTORE_FILE)
-        // .setPassword("ThisIsMyPassword23@#");
-
-        // HttpServerOptions opts = new HttpServerOptions()
-        // .setSsl(true)
-        // .setKeyStoreOptions(jksOptions);
-
-        // this.vertx.createHttpServer(opts)
-        // .requestHandler(router)
-        // .listen(customport, handler);
-        // }
 
         this.vertx.createHttpServer()
             .requestHandler(router)
@@ -161,7 +131,7 @@ public class MainService extends AuthService {
 
         VertxServer grpcServer = VertxServerBuilder
                 .forAddress(vertx, "0.0.0.0", grpcPort)
-                // .addService(new CalculatorService()) // Register gRPC services here
+                // Register gRPC services here
                 .addService(helloService.bindService())
                 .addService(userService.bindService())
                 .intercept(new HeaderInterceptor())
@@ -177,9 +147,11 @@ public class MainService extends AuthService {
         this.vertx.executeBlocking(future -> {
             grpcServer.start(ar -> {
                 if (ar.succeeded()) {
-                    System.out.println("gRPC server started on port { " + grpcPort + " }");
+                    System.out.println("gRPC server started on port { "
+                        + grpcPort + " }");
                 } else {
-                    System.out.println("gRPC server failed to start -> " + ar.cause());
+                    System.out.println("gRPC server failed to start -> "
+                        + ar.cause());
                     ar.cause().printStackTrace();
                 }
             });
@@ -206,31 +178,30 @@ public class MainService extends AuthService {
      */
     private void setRoutes(final Router router) {
         router.route().handler(CorsHandler.create(/* "*" */)
-                .allowedMethod(HttpMethod.POST)
-                .allowedMethod(HttpMethod.GET)
-                .allowedMethod(HttpMethod.OPTIONS)
-                .allowedMethod(HttpMethod.PUT)
-                .allowedMethod(HttpMethod.DELETE)
-                .allowedHeader("SKEY")
-                .allowedHeader("ApiKey")
-                .allowedHeader("ModuleID")
-                .allowedHeader("Authorization")
-                .allowedHeader("Access-Control-Allow-Method")
-                .allowedHeader("Access-Control-Allow-Origin")
-                .allowedHeader("Access-Control-Allow-Credentials")
-                .allowedHeader("Content-Type"));
+            .allowedMethod(HttpMethod.POST)
+            .allowedMethod(HttpMethod.GET)
+            .allowedMethod(HttpMethod.OPTIONS)
+            .allowedMethod(HttpMethod.PUT)
+            .allowedMethod(HttpMethod.DELETE)
+            .allowedHeader("SKEY")
+            .allowedHeader("ApiKey")
+            .allowedHeader("ModuleID")
+            .allowedHeader("Authorization")
+            .allowedHeader("Access-Control-Allow-Method")
+            .allowedHeader("Access-Control-Allow-Origin")
+            .allowedHeader("Access-Control-Allow-Credentials")
+            .allowedHeader("Content-Type"));
 
         // Enable multipart form data parsing for all POST API requests.
         router.route().handler(BodyHandler.create());
 
         router.post("/searchusers").handler(this::searchUsers);
         router.post("/searchorganisations")
-                .handler(this::searchOrganisations);
+            .handler(this::searchOrganisations);
         router.post("/searchsms")
-                .handler(this::searchSMS);
+            .handler(this::searchSMS);
         router.post("/searchtemplates")
-                .handler(this::searchTemplates);
-        this.setListingsRoutes(router);
+            .handler(this::searchTemplates);
         this.setAuthRoutes(router);
     }
 
@@ -284,7 +255,6 @@ public class MainService extends AuthService {
 
     /**
      * Searches the database for values input.
-     *
      * @param rc The routing context
      */
     @SystemTasks(task = MODULE + "searchSMS")
@@ -296,20 +266,5 @@ public class MainService extends AuthService {
                     this.getDbUtils().find(
                             DB_SCHEDULES, body, resp);
                 }, "searchTerm", "fieldsToSearchFor");
-    }
-
-    /**
-     * Sets up listings service routes for all authenticated users.
-     *
-     * @param router The router used to set paths.
-     */
-    protected void setListingsRoutes(final Router router) {
-        this.logger.info("set Listings routes -> ()");
-
-        // Initialize and set up listings service routes
-        ListingsService listingsService = new ListingsService();
-        listingsService.setDBUtils(this.getDbUtils());
-        listingsService.setUtils(this.getUtils());
-        listingsService.setListingsRoutes(router);
     }
 }

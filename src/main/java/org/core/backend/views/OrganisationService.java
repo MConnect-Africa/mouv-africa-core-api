@@ -5,22 +5,18 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
-import java.util.UUID;
-import org.core.backend.models.Collections;
 import org.core.backend.models.Status;
+import org.core.backend.models.Collections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.utils.backend.models.RbacTasks;
-import org.utils.backend.models.Role;
 import org.utils.backend.utils.IDBJsonObject;
-import org.utils.backend.utils.IDBSuccess;
 import org.utils.backend.utils.SystemTasks;
 import org.utils.backend.utils.Utils;
 
 /**
  * The organisations sevice.
  */
-public class OrganisationService extends AdminService{
+public class OrganisationService extends AdminService {
 
     /**
      * The logger instance that is used to log.
@@ -47,6 +43,7 @@ public class OrganisationService extends AdminService{
             .handler(this::listStatuses);
 
         this.setAdminRoutes(router);
+
     }
 
     /**
@@ -67,13 +64,15 @@ public class OrganisationService extends AdminService{
                 this.getUser(userId, founder -> {
                     body.put("organisationId", orgId)
                         .put("isActive", true);
-                    this.getUtils().addUserToObject("founder",
-                        founder, body);
+                    this.getUtils().addUserToObject("founder", founder, body);
+
                     this.getUtils().setUserRoles(founder, "admin");
-                    this.getUtils().setUserRoles(founder, body.getString("accountType"));
+                    this.getUtils().setUserRoles(founder,
+                        body.getString("accountType"));
+
                     body.put("status", Status.ACTIVE);
-                    this.getDbUtils().save(
-                        Collections.ORGANISATION.toString(), body, headers, () -> {
+                    this.getDbUtils().save(Collections.ORGANISATION.toString(),
+                        body, headers, () -> {
                         founder.put("organisationId", orgId);
                         this.getDbUtils().save(
                             Collections.USERS.toString(), founder, headers);
@@ -93,8 +92,8 @@ public class OrganisationService extends AdminService{
                             + " is missing").encode());
                 }, resp);
             } else {
-                resp.end(this.getUtils().getResponse(
-                    Utils.ERR_402, "User Already belongs to an organisation").encode());
+                resp.end(this.getUtils().getResponse(Utils.ERR_402,
+                    "User Already belongs to an organisation").encode());
             }
         }, "name", "phoneNumber", "email");
     }
