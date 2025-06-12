@@ -718,6 +718,8 @@ public class ListingsService extends OrganisationService {
                     try {
                         String listingId = body.getString("listingId");
                         String discountId = body.getString("discountId");
+                        String orgId = xusr.getString("organisationId");
+                        String now = Instant.now().toString();
 
                         // Check if listing exists and user has access
                         JsonObject listingQuery = new JsonObject()
@@ -748,41 +750,31 @@ public class ListingsService extends OrganisationService {
                                                         || discount.isEmpty()) {
                                                     resp.end(this.getUtils()
                                                             .getResponse(
-                                                                    Utils.ERR_404,
-                                                                    "Active discount not "
-                                                                            + "found")
+                                                        Utils.ERR_404,
+                                                    "Active discount not found")
                                                             .encode());
                                                     return;
                                                 }
 
-                                                // Create listing-discount
-                                                // relationship
-                                                JsonObject listingDiscount = new JsonObject()
-                                                        .put("_id",
-                                                                UUID.randomUUID()
-                                                                        .toString())
-                                                        .put("listingId",
-                                                                listingId)
-                                                        .put("discountId",
-                                                                discountId)
-                                                        .put("organizationId",
-                                                                xusr.getString(
-                                                                        "organisationId"))
-                                                        .put("appliedBy",
-                                                                xusr.getString(
-                                                                        "_id"))
-                                                        .put("appliedAt",
-                                                                Instant.now()
-                                                                        .toString())
-                                                        .put("status", "active");
+                                    // Create listing-discount
+                                    // relationship
+                                    JsonObject lsDiscount = new JsonObject()
+                                        .put("_id", UUID.randomUUID()
+                                        .toString())
+                                        .put("listingId", listingId)
+                                        .put("discountId", discountId)
+                                        .put("organizationId", orgId)
+                                        .put("appliedBy", xusr.getString("_id"))
+                                        .put("appliedAt", now)
+                                        .put("status", "active");
 
-                                                this.getUtils()
-                                                        .assignRoleSaveFilters(
-                                                                xusr, listingDiscount);
+                                        this.getUtils()
+                                            .assignRoleSaveFilters(
+                                                xusr, lsDiscount);
                                                 this.getDbUtils().save(
-                                                        Collections.LISTING_DISCOUNTS
-                                                                .toString(),
-                                                        listingDiscount,
+                                                Collections.LISTING_DISCOUNTS
+                                                        .toString(),
+                                                        lsDiscount,
                                                         headers, resp);
                                             }, resp);
                                 }, resp);
@@ -824,9 +816,9 @@ public class ListingsService extends OrganisationService {
                 }, "listingId", "discountId");
     }
 
-    // =============================================================================
+    // ==============================================================
     // PROMOTION MANAGEMENT METHODS
-    // =============================================================================
+    // ==============================================================
 
     /**
      * Creates a new promotion.
@@ -844,7 +836,6 @@ public class ListingsService extends OrganisationService {
                         // Add mandatory system fields
                         body.put("_id", promotionId)
                                 .put("organizationId",
-
                                         xusr.getString("organisationId"))
                                 .put("createdBy", xusr.getString("_id"))
                                 .put("createdAt", Instant.now().toString())
@@ -869,7 +860,7 @@ public class ListingsService extends OrganisationService {
                             } catch (Exception dateEx) {
                                 resp.end(this.getUtils().getResponse(
                                         Utils.ERR_400,
-                                        "Invalid date format. Use ISO 8601 format")
+                                "Invalid date format. Use ISO 8601 format")
                                         .encode());
                                 return;
                             }
@@ -878,7 +869,7 @@ public class ListingsService extends OrganisationService {
                         // Save promotion
                         this.getUtils().assignRoleSaveFilters(xusr, body);
                         this.getDbUtils().save(
-                                Collections.PROMOTIONS.toString(), body, headers, resp);
+                    Collections.PROMOTIONS.toString(), body, headers, resp);
 
                     } catch (final Exception e) {
                         this.logger.error(e.getMessage(), e);
@@ -924,10 +915,11 @@ public class ListingsService extends OrganisationService {
                                 .put("_id", promotionId);
 
                         // Apply role-based query filters
-                        this.getUtils().assignRoleQueryFilters(xusr, query, false);
+                        this.getUtils().assignRoleQueryFilters(
+                            xusr, query, false);
 
-                        this.getDbUtils().update(
-                                Collections.PROMOTIONS.toString(), query, body, resp);
+                        String items = Collections.PROMOTIONS.toString();
+                        this.getDbUtils().update(items, query, body, resp);
 
                     } catch (final Exception e) {
                         this.logger.error(e.getMessage(), e);
@@ -956,9 +948,8 @@ public class ListingsService extends OrganisationService {
                             .put("status", "deleted")
                             .put("deletedAt", Instant.now().toString())
                             .put("deletedBy", xusr.getString("_id"));
-
-                    this.getDbUtils().update(
-                            Collections.PROMOTIONS.toString(), query, update, resp);
+                    String items = Collections.PROMOTIONS.toString();
+                    this.getDbUtils().update(items, query, update, resp);
                 }, "_id");
     }
 
@@ -976,14 +967,24 @@ public class ListingsService extends OrganisationService {
                         String promotionId = body.getString("promotionId");
 
                         // Check if listing exists and user has access
-                        JsonObject listingQuery = new JsonObject().put("_id", listingId);
-                        this.getUtils().assignRoleQueryFilters(xusr, listingQuery, false);
+                        JsonObject listingQuery = new JsonObject()
+                                .put("_id", listingId);
+                        this.getUtils().assignRoleQueryFilters(
+                            xusr, listingQuery, false);
+
+                        String listings = Collections.LISTINGS.toString();
+                        String promotions = Collections.PROMOTIONS.toString();
+                        String cols = Collections.LISTING_PROMOTIONS.toString();
+                        String orgId = xusr.getString("organisationId");
+                        String now = Instant.now().toString();
 
                         this.getDbUtils().findOne(
-                                Collections.LISTINGS.toString(), listingQuery, listing -> {
+                                listings, listingQuery, listing -> {
                                     if (listing == null || listing.isEmpty()) {
                                         resp.end(this.getUtils().getResponse(
-                                                Utils.ERR_404, "Listing not found").encode());
+                                            Utils.ERR_404,
+                                            "Listing not found"
+                                        ).encode());
                                         return;
                                     }
 
@@ -995,38 +996,33 @@ public class ListingsService extends OrganisationService {
                                             promotionQuery, false);
 
                                     this.getDbUtils().findOne(
-                                            Collections.PROMOTIONS.toString(),
-                                            promotionQuery, promotion -> {
-                                                if (promotion == null || promotion.isEmpty()) {
-                                                    resp.end(this.getUtils()
-                                                            .getResponse(
-                                                                    Utils.ERR_404,
-                                                                    "Active promotion not found")
-                                                            .encode());
-                                                    return;
-                                                }
+                                        promotions,
+                                        promotionQuery, item -> {
+                                        if (item == null || item.isEmpty()) {
+                                           resp.end(this.getUtils().getResponse(
+                                                Utils.ERR_404,
+                                                "Active promotion not found"
+                                            ).encode());
+                                            return;
+                                        }
 
-                                                // Create listing-promotion relationship
-                                                JsonObject listingPromotion = new JsonObject()
-                                                        .put("_id", UUID.randomUUID().toString())
-                                                        .put("listingId", listingId)
-                                                        .put("promotionId", promotionId)
-                                                        .put("organizationId",
+                                    // Create listing-promotion relationship
+                                    JsonObject lsPromotion = new JsonObject()
+                                    .put("_id", UUID.randomUUID().toString())
+                                        .put("listingId", listingId)
+                                        .put("promotionId", promotionId)
+                                        .put("organizationId", orgId)
+                                        .put("appliedBy", xusr.getString("_id"))
+                                        .put("appliedAt", now)
+                                        .put("status", "active");
 
-                                                                xusr.getString("organisationId"))
-                                                        .put("appliedBy", xusr.getString("_id"))
-                                                        .put("appliedAt", Instant.now().toString())
-                                                        .put("status", "active");
-
-                                                this.getUtils()
-                                                        .assignRoleSaveFilters(xusr,
-                                                                listingPromotion);
-                                                this.getDbUtils().save(
-                                                        Collections.LISTING_PROMOTIONS
-                                                                .toString(),
-                                                        listingPromotion, headers, resp);
-                                            }, resp);
+                                        this.getUtils()
+                                            .assignRoleSaveFilters(
+                                                xusr, lsPromotion);
+                                    this.getDbUtils().save(
+                                        cols, lsPromotion, headers, resp);
                                 }, resp);
+                            }, resp);
 
                     } catch (final Exception e) {
                         this.logger.error(e.getMessage(), e);
@@ -1046,9 +1042,9 @@ public class ListingsService extends OrganisationService {
         this.getUtils().execute2(MODULE + "removePromotionFromListing", rc,
                 (xusr, body, params, headers, resp) -> {
                     JsonObject query = new JsonObject()
-                            .put("listingId", body.getString("listingId"))
-                            .put("promotionId", body.getString("promotionId"))
-                            .put("status", "active");
+                        .put("listingId", body.getString("listingId"))
+                        .put("promotionId", body.getString("promotionId"))
+                        .put("status", "active");
 
                     this.getUtils().assignRoleQueryFilters(xusr, query, false);
 
@@ -1063,9 +1059,9 @@ public class ListingsService extends OrganisationService {
                 }, "listingId", "promotionId");
     }
 
-    // =============================================================================
+    // ==========================================================
     // ADVANCED PRICING METHODS
-    // =============================================================================
+    // ==========================================================
 
     /**
      * Calculates the effective price of a listing after applying discounts and
@@ -1081,98 +1077,112 @@ public class ListingsService extends OrganisationService {
                         String listingId = body.getString("listingId");
 
                         // Get listing
-                        JsonObject listingQuery = new JsonObject().put("_id", listingId);
-                        this.getUtils().assignRoleQueryFilters(xusr, listingQuery, false);
+                        JsonObject listingQuery = new JsonObject()
+                            .put("_id", listingId);
+                        this.getUtils().assignRoleQueryFilters(
+                            xusr, listingQuery, false);
 
-                        this.getDbUtils().findOne(
-                                Collections.LISTINGS.toString(), listingQuery, listing -> {
-                                    if (listing == null || listing.isEmpty()) {
-                                        resp.end(this.getUtils().getResponse(
-                                                Utils.ERR_404, "Listing not found").encode());
-                                        return;
+                       this.getDbUtils().findOne(
+                            Collections.LISTINGS.toString(),
+                            listingQuery, item -> {
+                            if (item == null || item.isEmpty()) {
+                                resp.end(this.getUtils().getResponse(
+                                    Utils.ERR_404, "Listing not found"
+                                ).encode());
+                                return;
+                            }
+
+                            Double baseAmount = item.getDouble("amount");
+                            if (baseAmount == null) {
+                                resp.end(this.getUtils().getResponse(
+                                    Utils.ERR_400, "Listing has no amount set"
+                                ).encode());
+                                return;
+                            }
+
+                            // Get active discounts for this listing
+                            JsonObject discountQuery = new JsonObject()
+                                .put("listingId", listingId)
+                                .put("status", "active");
+
+                            this.getDbUtils().find(
+                                Collections.LISTING_DISCOUNTS.toString(),
+                                discountQuery,
+                                discountResults -> {
+                                try {
+                                    JsonArray items = this.getDbUtils()
+                                        .getResultArray(discountResults);
+                                    Double effectivePrice = baseAmount;
+
+                                    // Apply discounts
+                                    for (int i = 0; i < items.size(); i++) {
+                                        JsonObject rel = items.getJsonObject(i);
+                                        String itemId = rel.getString(
+                                            "discountId");
+                                        // Get discount details (this would
+                                        // need to be optimized with aggregation
+                                        // in production)
+                                        JsonObject query = new JsonObject().put(
+                                            "_id",
+                                            itemId);
+
+                                        // For simplicity, assuming we have
+                                        // discount details or would use
+                                        // aggregation
+                                        // This is a simplified calculation -
+                                        // in production you'd use
+                                        // MongoDB
+                                        // aggregation
                                     }
 
-                                    Double baseAmount = listing.getDouble("amount");
-                                    if (baseAmount == null) {
-                                        resp.end(this.getUtils().getResponse(
-                                                Utils.ERR_400, "Listing has no amount set").encode());
-                                        return;
-                                    }
+                                    // Get active promotions for this listing
+                                    JsonObject promotionQuery = new JsonObject()
+                                        .put("listingId", listingId)
+                                        .put("status", "active");
 
-                                    // Get active discounts for this listing
-                                    JsonObject discountQuery = new JsonObject()
+                                    this.getDbUtils().find(
+                                    Collections.LISTING_PROMOTIONS.toString(),
+                                    promotionQuery, promotionResults -> {
+                                    try {
+
+                                        JsonObject result = new JsonObject()
                                             .put("listingId", listingId)
-                                            .put("status", "active");
+                                            .put("baseAmount", baseAmount)
+                                            .put("effectivePrice",
+                                                effectivePrice)
+                                            .put("discountsApplied",
+                                                discounts.size())
+                                            .put("promotionsApplied",
+                                                promotionResults.size())
+                                            .put("savings",
+                                                baseAmount - effectivePrice);
 
-                                    this.getDbUtils().find(Collections.LISTING_DISCOUNTS.toString(),
-                                            discountQuery,
-                                            discountResults -> {
-                                                try {
-                                                    JsonArray discounts = this.getDbUtils()
-                                                            .getResultArray(discountResults);
-                                                    Double effectivePrice = baseAmount;
+                                        resp.end(this.getUtils().getResponse(
+                                            result).encode());
 
-                                                    // Apply discounts
-                                                    for (int i = 0; i < discounts.size(); i++) {
-                                                        JsonObject discountRelation = discounts.getJsonObject(i);
-                                                        String discountId = discountRelation.getString("discountId");
-
-                                                        // Get discount details (this would need to be optimized with
-                                                        // aggregation in production)
-                                                        JsonObject discountDetailQuery = new JsonObject().put("_id",
-                                                                discountId);
-                                                        // For simplicity, assuming we have discount details or would
-                                                        // use
-                                                        // aggregation
-                                                        // This is a simplified calculation - in production you'd use
-                                                        // MongoDB
-                                                        // aggregation
-                                                    }
-
-                                                    // Get active promotions for this listing
-                                                    JsonObject promotionQuery = new JsonObject()
-                                                            .put("listingId", listingId)
-                                                            .put("status", "active");
-
-                                                    this.getDbUtils().find(Collections.LISTING_PROMOTIONS.toString(),
-
-                                                            promotionQuery, promotionResults -> {
-                                                                try {
-
-                                                                    JsonObject result = new JsonObject()
-                                                                            .put("listingId", listingId)
-                                                                            .put("baseAmount", baseAmount)
-                                                                            .put("effectivePrice", effectivePrice)
-                                                                            .put("discountsApplied", discounts.size())
-                                                                            .put("promotionsApplied",
-                                                                                    promotionResults.size())
-                                                                            .put("savings",
-                                                                                    baseAmount - effectivePrice);
-
-                                                                    resp.end(this.getUtils().getResponse(result)
-                                                                            .encode());
-
-                                                                } catch (Exception e) {
-                                                                    this.logger.error(e.getMessage(), e);
-                                                                    resp.end(this.getUtils().getResponse(
-                                                                            Utils.ERR_502, e.getMessage()).encode());
-                                                                }
-                                                            }, resp);
-
-                                                } catch (Exception e) {
-                                                    this.logger.error(e.getMessage(), e);
-                                                    resp.end(this.getUtils().getResponse(
-                                                            Utils.ERR_502, e.getMessage()).encode());
-                                                }
-                                            }, resp);
+                                    } catch (Exception e) {
+                                        this.logger.error(e.getMessage(), e);
+                                        resp.end(this.getUtils().getResponse(
+                                            Utils.ERR_502,
+                                            e.getMessage()).encode());
+                                    }
                                 }, resp);
 
-                    } catch (final Exception e) {
-                        this.logger.error(e.getMessage(), e);
-                        resp.end(this.getUtils().getResponse(
-                                Utils.ERR_502, e.getMessage()).encode());
-                    }
-                }, "listingId");
+                            } catch (Exception e) {
+                                this.logger.error(e.getMessage(), e);
+                                resp.end(this.getUtils().getResponse(
+                                    Utils.ERR_502, e.getMessage()).encode());
+                                return;
+                            }
+                        }, resp);
+                    }, resp);
+
+                } catch (final Exception e) {
+                    this.logger.error(e.getMessage(), e);
+                    resp.end(this.getUtils().getResponse(
+                        Utils.ERR_502, e.getMessage()).encode());
+                }
+            }, "listingId");
     }
 
     /**
@@ -1182,56 +1192,64 @@ public class ListingsService extends OrganisationService {
      */
     @SystemTasks(task = MODULE + "listListingsWithActivePromotions")
     private void listListingsWithActivePromotions(final RoutingContext rc) {
-        this.getUtils().execute2(MODULE + "listListingsWithActivePromotions", rc,
-                (xusr, body, params, headers, resp) -> {
-                    // Apply role-based query filters
-                    this.getUtils().assignRoleQueryFilters(xusr, body, false);
+        this.getUtils().execute2(MODULE + "listListingsWithActivePromotions",
+            rc,
+            (xusr, body, params, headers, resp) -> {
+                // Apply role-based query filters
+                this.getUtils().assignRoleQueryFilters(xusr, body, false);
 
-                    // Query for listings that have active promotions
-                    JsonObject promotionQuery = new JsonObject()
-                            .put("status", "active");
-                    this.getUtils().assignRoleQueryFilters(xusr, promotionQuery, false);
+                // Query for listings that have active promotions
+                JsonObject promotionQuery = new JsonObject()
+                    .put("status", "active");
+                this.getUtils().assignRoleQueryFilters(
+                    xusr, promotionQuery, false);
 
-                    // This would ideally use aggregation to join listings with promotions
-                    // For now, we'll get active promotion relationships and then fetch listings
-                    this.getDbUtils().find(
-                            Collections.LISTING_PROMOTIONS.toString(),
-                            promotionQuery,
-                            promotionResults -> {
-                                try {
-                                    JsonArray promotions = this.getDbUtils().getResultArray(promotionResults);
-                                    JsonArray listingIds = new JsonArray();
+                // This would ideally use aggregation to join listings
+                // with promotions
+                // For now, we'll get active promotion relationships
+                // and then fetch listings
+                this.getDbUtils().find(
+                    Collections.LISTING_PROMOTIONS.toString(),
+                    promotionQuery,
+                    promotionResults -> {
+                    try {
+                        JsonArray promotions = this.getDbUtils()
+                            .getResultArray(promotionResults);
+                        JsonArray listingIds = new JsonArray();
 
-                                    for (int i = 0; i < promotions.size(); i++) {
-                                        JsonObject promotion = promotions.getJsonObject(i);
-                                        String listingId = promotion.getString("listingId");
-                                        if (!listingIds.contains(listingId)) {
-                                            listingIds.add(listingId);
-                                        }
-                                    }
+                        for (int i = 0; i < promotions.size(); i++) {
+                            JsonObject promotion = promotions.getJsonObject(i);
+                            String listingId = promotion.getString("listingId");
+                            if (!listingIds.contains(listingId)) {
+                                listingIds.add(listingId);
+                            }
+                        }
 
-                                    if (listingIds.isEmpty()) {
-                                        resp.end(this.getUtils().getResponse(new JsonArray()).encode());
-                                        return;
-                                    }
+                        if (listingIds.isEmpty()) {
+                            resp.end(
+                                this.getUtils().getResponse(
+                                    new JsonArray()).encode());
+                            return;
+                        }
 
-                                    // Get listings
-                                    JsonObject listingQuery = new JsonObject()
-                                            .put("_id", new JsonObject().put("$in", listingIds));
-                                    this.getUtils().assignRoleQueryFilters(
-                                            xusr, listingQuery, false);
+                        // Get listings
+                        JsonObject listingQuery = new JsonObject()
+                            .put("_id",
+                            new JsonObject().put("$in", listingIds));
+                        this.getUtils().assignRoleQueryFilters(
+                            xusr, listingQuery, false);
 
-                                    this.getDbUtils().find(
-                                            Collections.LISTINGS.toString(),
-                                            listingQuery, resp);
+                        this.getDbUtils().find(
+                            Collections.LISTINGS.toString(),
+                            listingQuery, resp);
 
-                                } catch (Exception e) {
-                                    this.logger.error(e.getMessage(), e);
-                                    resp.end(this.getUtils().getResponse(
-                                            Utils.ERR_502,
-                                            e.getMessage()).encode());
-                                }
-                            }, resp);
+                    } catch (Exception e) {
+                        this.logger.error(e.getMessage(), e);
+                        resp.end(this.getUtils().getResponse(
+                            Utils.ERR_502,
+                            e.getMessage()).encode());
+                        }
+                    }, resp);
                 });
     }
 }
