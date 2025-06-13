@@ -1112,7 +1112,7 @@ public class ListingsService extends OrganisationService {
                                 discountResults -> {
                                 try {
                                     JsonArray items = this.getDbUtils()
-                                        .getResultArray(discountResults);
+                                        .getResponse(discountResults);
                                     Double effectivePrice = baseAmount;
 
                                     // Apply discounts
@@ -1214,9 +1214,7 @@ public class ListingsService extends OrganisationService {
                     promotionQuery,
                     promotionResults -> {
                     try {
-                        JsonArray promotions = this.getDbUtils()
-                            .getResponse(promotionResults)
-                            .getJsonArray("data");
+                        JsonArray promotions = new JsonArray(promotionResults);
                         JsonArray listingIds = new JsonArray();
 
                         for (int i = 0; i < promotions.size(); i++) {
