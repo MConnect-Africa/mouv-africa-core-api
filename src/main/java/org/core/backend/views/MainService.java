@@ -124,17 +124,17 @@ public class MainService extends AuthService {
      */
     private void startGrpcServer() {
         // Create instances of your services
-        HelloService helloService = new HelloService(
+        /*HelloService helloService = new HelloService(
                 this.getUtils(), this.getDbUtils());
         UserService userService = new UserService(
-                this.getUtils(), this.getDbUtils());
+                this.getUtils(), this.getDbUtils());*/
 
         VertxServer grpcServer = VertxServerBuilder
                 .forAddress(vertx, "0.0.0.0", grpcPort)
                 // Register gRPC services here
-                .addService(helloService.bindService())
-                .addService(userService.bindService())
-                .intercept(new HeaderInterceptor())
+                //.addService(helloService.bindService())
+                //.addService(userService.bindService())
+                //.intercept(new HeaderInterceptor())
                 .build();
 
         // VertxServerBuilder builder = VertxServerBuilder.forPort(vertx, 8080)
