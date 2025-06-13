@@ -27,7 +27,7 @@ public class OrganisationService extends AdminService {
 
     /**
      * Sets routes for the http server.
-     * 
+     *
      * @param router The router used to set paths.
      */
     protected void serOrganisationService(final Router router) {
@@ -50,7 +50,7 @@ public class OrganisationService extends AdminService {
 
     /**
      * Create an organisation.
-     * 
+     *
      * @param rc The routing context.
      */
     @SystemTasks(task = MODULE + "createOrganisation")
@@ -60,33 +60,39 @@ public class OrganisationService extends AdminService {
 
                     String orgId = xusr.getString("organisationId");
                     if (orgId == null || orgId.isEmpty()) {
-                        String userId = this.getUtils().isRole("superadmin", xusr)
+                        String userId = this.getUtils().isRole(
+                            "superadmin", xusr)
                                 ? body.getString("userId", null)
                                 : xusr.getString("_id");
 
                         this.getUser(userId, founder -> {
                             body.put("organisationId", orgId)
-                                    .put("isActive", true);
-                            this.getUtils().addUserToObject("founder", founder, body);
+                                .put("isActive", true);
+                            this.getUtils().addUserToObject(
+                                "founder", founder, body);
 
                             this.getUtils().setUserRoles(founder, "admin");
                             this.getUtils().setUserRoles(founder,
                                     body.getString("accountType"));
 
                             body.put("status", Status.ACTIVE);
-                            this.getDbUtils().save(Collections.ORGANISATION.toString(),
+                            this.getDbUtils().save(
+                                Collections.ORGANISATION.toString(),
                                     body, headers, () -> {
                                         founder.put("organisationId", orgId);
                                         this.getDbUtils().save(
-                                                Collections.USERS.toString(), founder, headers);
+                                            Collections.USERS.toString(),
+                                            founder, headers);
                                         resp.end(this.getUtils().getResponse(
                                                 body).encode());
-                                        // create default rbac tasks
-                                        this.createOrganisationDefaultRbacTasks(orgId);
+                                // create default rbac tasks
+                                this.createOrganisationDefaultRbacTasks(orgId);
                                     }, fail -> {
-                                        this.logger.error(fail.getMessage(), fail);
-                                        resp.end(this.getUtils().getResponse(
-                                                Utils.ERR_502, fail.getMessage()).encode());
+                                       this.logger.error(
+                                        fail.getMessage(), fail);
+                                    resp.end(this.getUtils().getResponse(
+                                        Utils.ERR_502,
+                                        fail.getMessage()).encode());
                                     });
                         }, () -> {
                             resp.end(this.getUtils().getResponse(
@@ -96,15 +102,16 @@ public class OrganisationService extends AdminService {
                                     .encode());
                         }, resp);
                     } else {
-                        resp.end(this.getUtils().getResponse(Utils.ERR_402,
-                                "User Already belongs to an organisation").encode());
+                        resp.end(this.getUtils().getResponse(
+                           Utils.ERR_402,
+                           "User Already belongs to an organisation").encode());
                     }
                 }, "name", "phoneNumber", "email");
     }
 
     /**
      * Gets the user record.
-     * 
+     *
      * @param userId  the _id of the user.
      * @param success the success callback method.
      * @param failed  The callback if user is !found
@@ -136,7 +143,7 @@ public class OrganisationService extends AdminService {
 
     /**
      * Create an organisation.
-     * 
+     *
      * @param rc The routing context.
      */
     @SystemTasks(task = MODULE + "getOrganisation")
@@ -151,7 +158,7 @@ public class OrganisationService extends AdminService {
 
     /**
      * Update an organisation.
-     * 
+     *
      * @param rc The routing context.
      */
     @SystemTasks(task = MODULE + "updateOrganisation")
@@ -159,7 +166,8 @@ public class OrganisationService extends AdminService {
         this.getUtils().execute2(MODULE + "updateOrganisation", rc,
                 (xusr, body, params, headers, resp) -> {
                     JsonObject qry = new JsonObject()
-                            .put("organisationId", xusr.getString("organisationId"));
+                        .put("organisationId",
+                        xusr.getString("organisationId"));
 
                     this.getDbUtils().findOneAndUpdate(
                             Collections.ORGANISATION.toString(),
@@ -169,7 +177,7 @@ public class OrganisationService extends AdminService {
 
     /**
      * Update an organisation.
-     * 
+     *
      * @param rc The routing context.
      */
     @SystemTasks(task = MODULE + "listOrganisations")
@@ -184,7 +192,7 @@ public class OrganisationService extends AdminService {
 
     /**
      * Update an organisation.
-     * 
+     *
      * @param rc The routing context.
      */
     @SystemTasks(task = MODULE + "listStatuses")
@@ -202,7 +210,7 @@ public class OrganisationService extends AdminService {
 
     /**
      * Creates the organisation default rbac tasks.
-     * 
+     *
      * @param organisationId The organisation id.
      */
     private void createOrganisationDefaultRbacTasks(
