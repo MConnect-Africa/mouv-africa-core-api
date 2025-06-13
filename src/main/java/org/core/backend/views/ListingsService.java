@@ -1111,8 +1111,8 @@ public class ListingsService extends OrganisationService {
                                 discountQuery,
                                 discountResults -> {
                                 try {
-                                    JsonArray items = this.getDbUtils()
-                                        .getResponse(discountResults);
+                                    JsonArray items = new JsonArray(
+                                        discountResults);
                                     Double effectivePrice = baseAmount;
 
                                     // Apply discounts
