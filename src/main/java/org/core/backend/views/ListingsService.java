@@ -1,5 +1,6 @@
 package org.core.backend.views;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
@@ -852,14 +853,14 @@ public class ListingsService extends OrganisationService {
                                 Instant end = Instant.parse(endDate);
                                 if (end.isBefore(start)) {
                                     resp.end(this.getUtils().getResponse(
-                                            Utils.ERR_400,
+                                            Utils.ERR_502,
                                             "End date must be after start date")
                                             .encode());
                                     return;
                                 }
                             } catch (Exception dateEx) {
                                 resp.end(this.getUtils().getResponse(
-                                        Utils.ERR_400,
+                                        Utils.ERR_502,
                                 "Invalid date format. Use ISO 8601 format")
                                         .encode());
                                 return;
@@ -1095,7 +1096,7 @@ public class ListingsService extends OrganisationService {
                             Double baseAmount = item.getDouble("amount");
                             if (baseAmount == null) {
                                 resp.end(this.getUtils().getResponse(
-                                    Utils.ERR_400, "Listing has no amount set"
+                                    Utils.ERR_502, "Listing has no amount set"
                                 ).encode());
                                 return;
                             }
@@ -1151,7 +1152,7 @@ public class ListingsService extends OrganisationService {
                                             .put("effectivePrice",
                                                 effectivePrice)
                                             .put("discountsApplied",
-                                                discounts.size())
+                                                items.size())
                                             .put("promotionsApplied",
                                                 promotionResults.size())
                                             .put("savings",
@@ -1214,7 +1215,8 @@ public class ListingsService extends OrganisationService {
                     promotionResults -> {
                     try {
                         JsonArray promotions = this.getDbUtils()
-                            .getResultArray(promotionResults);
+                            .getResponse(promotionResults)
+                            .getJsonArray("data");
                         JsonArray listingIds = new JsonArray();
 
                         for (int i = 0; i < promotions.size(); i++) {
