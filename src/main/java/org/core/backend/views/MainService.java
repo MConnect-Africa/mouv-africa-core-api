@@ -213,12 +213,12 @@ public class MainService extends AuthService {
     @SystemTasks(task = MODULE + "searchUsers")
     private void searchUsers(final RoutingContext rc) {
         this.getUtils().execute2(MODULE + "searchUsers", rc,
-                (xusr, body, params, headers, resp) -> {
+            (xusr, body, params, headers, resp) -> {
 
-                    this.getUtils().addFieldsToSearchQuery(body);
-                    this.getDbUtils().find(
-                            Collections.USERS.toString(), body, resp);
-                }, "searchTerm", "fieldsToSearchFor");
+                this.getUtils().addFieldsToSearchQuery(body);
+                this.getDbUtils().find(
+                        Collections.USERS.toString(), body, resp);
+            }, "searchTerm", "fieldsToSearchFor");
     }
 
     /**
@@ -229,12 +229,12 @@ public class MainService extends AuthService {
     @SystemTasks(task = MODULE + "searchOrganisations")
     private void searchOrganisations(final RoutingContext rc) {
         this.getUtils().execute2(MODULE + "searchOrganisations", rc,
-                (xusr, body, params, headers, resp) -> {
+            (xusr, body, params, headers, resp) -> {
 
-                    this.getUtils().addFieldsToSearchQuery(body);
-                    this.getDbUtils().find(
-                            Collections.ORGANISATION.toString(), body, resp);
-                }, "searchTerm", "fieldsToSearchFor");
+                this.getUtils().addFieldsToSearchQuery(body);
+                this.getDbUtils().find(
+                        Collections.ORGANISATION.toString(), body, resp);
+            }, "searchTerm", "fieldsToSearchFor");
     }
 
     /**
@@ -245,12 +245,12 @@ public class MainService extends AuthService {
     @SystemTasks(task = MODULE + "searchTemplates")
     private void searchTemplates(final RoutingContext rc) {
         this.getUtils().execute2(MODULE + "searchTemplates", rc,
-                (xusr, body, params, headers, resp) -> {
+            (xusr, body, params, headers, resp) -> {
 
-                    this.getUtils().addFieldsToSearchQuery(body);
-                    this.getDbUtils().find(
-                            Collections.TEMPLATES.toString(), body, resp);
-                }, "searchTerm", "fieldsToSearchFor");
+                this.getUtils().addFieldsToSearchQuery(body);
+                this.getDbUtils().find(
+                        Collections.TEMPLATES.toString(), body, resp);
+            }, "searchTerm", "fieldsToSearchFor");
     }
 
     /**
@@ -260,11 +260,11 @@ public class MainService extends AuthService {
     @SystemTasks(task = MODULE + "searchSMS")
     private void searchSMS(final RoutingContext rc) {
         this.getUtils().execute2(MODULE + "searchSMS", rc,
-                (xusr, body, params, headers, resp) -> {
+            (xusr, body, params, headers, resp) -> {
 
-                    this.getUtils().addFieldsToSearchQuery(body);
-                    this.getDbUtils().find(
-                            DB_SCHEDULES, body, resp);
-                }, "searchTerm", "fieldsToSearchFor");
+                this.getUtils().addFieldsToSearchQuery(body);
+                this.getDbUtils().find(
+                        DB_SCHEDULES, body, resp);
+            }, "searchTerm", "fieldsToSearchFor");
     }
 }

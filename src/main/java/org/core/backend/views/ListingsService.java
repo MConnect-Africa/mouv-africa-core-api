@@ -1,9 +1,11 @@
 package org.core.backend.views;
 
+import io.vertx.ext.web.Router;
+
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+
 import java.time.Instant;
 import java.util.UUID;
 import org.core.backend.models.Collections;
@@ -17,7 +19,7 @@ import org.utils.backend.utils.Utils;
  * Handles creation, reading, updating, and searching of listings with support
  * for custom fields.
  */
-public class ListingsService extends OrganisationService {
+public class ListingsService extends ListingsServiceV2 {
 
     /**
      * Maximum percentage value for discounts.
@@ -45,9 +47,87 @@ public class ListingsService extends OrganisationService {
     private Logger logger = LoggerFactory.getLogger(
             ListingsService.class.getName());
 
+        /**
+         * Sets routes for the HTTP server.
+         *
+         * @param router The router used to set paths.
+         */
+        protected void setListingsRoutes(final Router router) {
+                this.logger.info("setListingsRoutes -> ()");
+
+                // // Listing management routes
+                // router.post("/createListing")
+                //         .handler(this::createListing);
+                // router.post("/listListings")
+                //         .handler(this::listListings);
+                // router.post("/getListing")
+                //         .handler(this::getListing);
+                // router.post("/updateListing")
+                //         .handler(this::updateListing);
+                // router.post("/deleteListing")
+                //         .handler(this::deleteListing);
+                // router.post("/searchListings")
+                //         .handler(this::searchListings);
+
+                // // Listing types management routes
+                // router.post("/createListingType")
+                //         .handler(this::createListingType);
+                // router.post("/listListingTypes")
+                //         .handler(this::listListingTypes);
+                // router.post("/updateListingType")
+                //         .handler(this::updateListingType);
+                // router.post("/deleteListingType")
+                //         .handler(this::deleteListingType);
+
+                // // Advanced listing operations
+                // router.post("/listListingsByType")
+                //         .handler(this::listListingsByType);
+                // router.post("/listListingsByUser")
+                //         .handler(this::listListingsByUser);
+                // router.post("/listListingsByOrganisation")
+                //         .handler(this::listListingsByOrganisation);
+
+                // // Discount management routes
+                // router.post("/createDiscount")
+                //         .handler(this::createDiscount);
+                // router.post("/listDiscounts")
+                //         .handler(this::listDiscounts);
+                // router.post("/updateDiscount")
+                //         .handler(this::updateDiscount);
+                // router.post("/deleteDiscount")
+                //         .handler(this::deleteDiscount);
+                // router.post("/applyDiscountToListing")
+                //         .handler(this::applyDiscountToListing);
+                // router.post("/removeDiscountFromListing")
+                //         .handler(this::removeDiscountFromListing);
+
+                // // Promotion management routes
+                // router.post("/createPromotion")
+                //         .handler(this::createPromotion);
+                // router.post("/listPromotions")
+                //         .handler(this::listPromotions);
+                // router.post("/updatePromotion")
+                //         .handler(this::updatePromotion);
+                // router.post("/deletePromotion")
+                //         .handler(this::deletePromotion);
+                // router.post("/applyPromotionToListing")
+                //         .handler(this::applyPromotionToListing);
+                // router.post("/removePromotionFromListing")
+                //         .handler(this::removePromotionFromListing);
+
+                // // Advanced pricing operations
+                // router.post("/getListingEffectivePrice")
+                //         .handler(this::getListingEffectivePrice);
+                // router.post("/listListingsWithActivePromotions")
+                //         .handler(this::listListingsWithActivePromotions);
+
+                // Call parent organization service routes
+                this.setListingsV2Routes(router);
+
+        }
+
     /**
      * Builds dynamic query from filters-supports all fields and operators.
-     *
      * @param filters The filters object from request body
      * @return JsonObject representing MongoDB query
      */
@@ -115,85 +195,6 @@ public class ListingsService extends OrganisationService {
             }
         }
         return query;
-    }
-
-    /**
-     * Sets routes for the HTTP server.
-     *
-     * @param router The router used to set paths.
-     */
-    protected void setListingsRoutes(final Router router) {
-        this.logger.info("setListingsRoutes -> ()");
-
-        // Listing management routes
-        router.post("/createListing")
-                .handler(this::createListing);
-        router.post("/listListings")
-                .handler(this::listListings);
-        router.post("/getListing")
-                .handler(this::getListing);
-        router.post("/updateListing")
-                .handler(this::updateListing);
-        router.post("/deleteListing")
-                .handler(this::deleteListing);
-        router.post("/searchListings")
-                .handler(this::searchListings);
-
-        // Listing types management routes
-        router.post("/createListingType")
-                .handler(this::createListingType);
-        router.post("/listListingTypes")
-                .handler(this::listListingTypes);
-        router.post("/updateListingType")
-                .handler(this::updateListingType);
-        router.post("/deleteListingType")
-                .handler(this::deleteListingType);
-
-        // Advanced listing operations
-        router.post("/listListingsByType")
-                .handler(this::listListingsByType);
-        router.post("/listListingsByUser")
-                .handler(this::listListingsByUser);
-        router.post("/listListingsByOrganisation")
-                .handler(this::listListingsByOrganisation);
-
-        // Discount management routes
-        router.post("/createDiscount")
-                .handler(this::createDiscount);
-        router.post("/listDiscounts")
-                .handler(this::listDiscounts);
-        router.post("/updateDiscount")
-                .handler(this::updateDiscount);
-        router.post("/deleteDiscount")
-                .handler(this::deleteDiscount);
-        router.post("/applyDiscountToListing")
-                .handler(this::applyDiscountToListing);
-        router.post("/removeDiscountFromListing")
-                .handler(this::removeDiscountFromListing);
-
-        // Promotion management routes
-        router.post("/createPromotion")
-                .handler(this::createPromotion);
-        router.post("/listPromotions")
-                .handler(this::listPromotions);
-        router.post("/updatePromotion")
-                .handler(this::updatePromotion);
-        router.post("/deletePromotion")
-                .handler(this::deletePromotion);
-        router.post("/applyPromotionToListing")
-                .handler(this::applyPromotionToListing);
-        router.post("/removePromotionFromListing")
-                .handler(this::removePromotionFromListing);
-
-        // Advanced pricing operations
-        router.post("/getListingEffectivePrice")
-                .handler(this::getListingEffectivePrice);
-        router.post("/listListingsWithActivePromotions")
-                .handler(this::listListingsWithActivePromotions);
-
-        // Call parent organization service routes
-        this.serOrganisationService(router);
-
     }
 
     /**
@@ -493,13 +494,11 @@ public class ListingsService extends OrganisationService {
         this.getUtils().execute2(MODULE + "createListingType", rc,
                 (xusr, body, params, headers, resp) -> {
                     // Add system fields
-                    body.put("organizationId",
-
-                            xusr.getString("organisationId"))
-                            .put("createdBy", xusr.getString("_id"))
-                            .put("createdAt", Instant.now().toString())
-                            .put("updatedAt", Instant.now().toString())
-                            .put("isActive", true);
+                    body.put("organizationId", xusr.getString("organisationId"))
+                        .put("createdBy", xusr.getString("_id"))
+                        .put("createdAt", Instant.now().toString())
+                        .put("updatedAt", Instant.now().toString())
+                        .put("isActive", true);
 
                     this.getUtils().assignRoleSaveFilters(xusr, body);
                     this.getDbUtils().save(Collections.LISTING_TYPES.toString(),

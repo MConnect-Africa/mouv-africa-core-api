@@ -25,6 +25,18 @@ public class BaseService extends AbstractVerticle {
     private Logger logger = LoggerFactory.getLogger(
         BaseService.class.getName());
 
+    /** the double value 100.0. */
+    public static final double HUNDRED = 100.0;
+
+    /**
+     * Maximum percentage value for discounts.
+     */
+    public static final int MAX_PERCENTAGE_DISCOUNT = 100;
+
+    /**
+     * The double number 0.0.
+     */
+    public static final double ZERO_DOUBLE  = 0.0;
 
     /**
      * The db utils instance.
