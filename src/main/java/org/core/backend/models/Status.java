@@ -11,16 +11,28 @@ public enum Status {
      */
     ACTIVE,
 
-
     /**
      * The pending status.
      */
     PENDING,
-
 
     /**
      * The disabled status.
      */
     DISABLED,
 
+    /** Checked out booking status. */
+    CHECKED_OUT,
+
+    /** Checked in booking status. */
+    CHECKED_IN,
+
+    /** cleaning out booking status. */
+    CLEANING,
+
+    /** suspended out booking status. */
+    SUSPENDED,
+
+    /** booked booking status. */
+    BOOKED
 }

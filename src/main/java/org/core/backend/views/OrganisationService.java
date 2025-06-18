@@ -34,15 +34,15 @@ public class OrganisationService extends AdminService {
         this.logger.info("set organistion routes -> ()");
 
         router.post("/createorganisation")
-                .handler(this::createOrganisation);
+            .handler(this::createOrganisation);
         router.post("/getorganisation")
-                .handler(this::getOrganisation);
+            .handler(this::getOrganisation);
         router.post("/updateorganisation")
-                .handler(this::updateOrganisation);
+            .handler(this::updateOrganisation);
         router.post("/listorganisations")
-                .handler(this::listOrganisations);
+            .handler(this::listOrganisations);
         router.post("/listStatuses")
-                .handler(this::listStatuses);
+            .handler(this::listStatuses);
 
         this.setAdminRoutes(router);
 
@@ -124,18 +124,18 @@ public class OrganisationService extends AdminService {
 
         if (this.getUtils().isValid(userId)) {
             this.getDbUtils().findOne(
-                    Collections.USERS.toString(), qry, res -> {
-                        if (res == null || res.isEmpty()) {
-                            failed.run();
-                        } else {
-                            success.run(res);
-                        }
+                Collections.USERS.toString(), qry, res -> {
+                    if (res == null || res.isEmpty()) {
+                        failed.run();
+                    } else {
+                        success.run(res);
+                    }
 
-                    }, fail -> {
-                        this.logger.error(fail.getMessage(), fail);
-                        resp.end(this.getUtils().getResponse(
-                                Utils.ERR_502, fail.getMessage()).encode());
-                    });
+                }, fail -> {
+                    this.logger.error(fail.getMessage(), fail);
+                    resp.end(this.getUtils().getResponse(
+                            Utils.ERR_502, fail.getMessage()).encode());
+                });
         } else {
             failed.run();
         }
@@ -143,7 +143,6 @@ public class OrganisationService extends AdminService {
 
     /**
      * Create an organisation.
-     *
      * @param rc The routing context.
      */
     @SystemTasks(task = MODULE + "getOrganisation")
@@ -158,36 +157,34 @@ public class OrganisationService extends AdminService {
 
     /**
      * Update an organisation.
-     *
      * @param rc The routing context.
      */
     @SystemTasks(task = MODULE + "updateOrganisation")
     private void updateOrganisation(final RoutingContext rc) {
         this.getUtils().execute2(MODULE + "updateOrganisation", rc,
-                (xusr, body, params, headers, resp) -> {
-                    JsonObject qry = new JsonObject()
-                        .put("organisationId",
-                        xusr.getString("organisationId"));
+            (xusr, body, params, headers, resp) -> {
+                JsonObject qry = new JsonObject()
+                    .put("organisationId",
+                    xusr.getString("organisationId"));
 
-                    this.getDbUtils().findOneAndUpdate(
-                            Collections.ORGANISATION.toString(),
-                            qry, body.getJsonObject("update"), resp);
-                }, "update");
+                this.getDbUtils().findOneAndUpdate(
+                        Collections.ORGANISATION.toString(),
+                        qry, body.getJsonObject("update"), resp);
+            }, "update");
     }
 
     /**
      * Update an organisation.
-     *
      * @param rc The routing context.
      */
     @SystemTasks(task = MODULE + "listOrganisations")
     private void listOrganisations(final RoutingContext rc) {
         this.getUtils().execute2(MODULE + "listOrganisations", rc,
-                (xusr, body, params, headers, resp) -> {
-                    this.getUtils().assignRoleSaveFilters(xusr, body);
-                    this.getDbUtils().find(Collections.ORGANISATION.toString(),
-                            body, resp);
-                });
+            (xusr, body, params, headers, resp) -> {
+                this.getUtils().assignRoleSaveFilters(xusr, body);
+                this.getDbUtils().find(Collections.ORGANISATION.toString(),
+                        body, resp);
+            });
     }
 
     /**

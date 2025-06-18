@@ -55,3 +55,17 @@
 - Export envars as outline in the projects .env file.
 - Run `mvn clean install -DskipTests` to install the packages imported in the codebase
 - Run `mvn clean compile vertx:run` To sun the code base locally
+
+
+
+
+
+
+
+
+
+
+
+
+
+

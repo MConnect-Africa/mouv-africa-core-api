@@ -125,8 +125,7 @@ public class ListingsService extends OrganisationService {
                         // Add mandatory system fields
                         body// .put("_id", listingId)
                                 .put("organizationId",
-
-                                        xusr.getString("organisationId"))
+                                xusr.getString("organisationId"))
                                 .put("userId", xusr.getString("_id"))
                                 .put("createdAt", Instant.now().toString())
                                 .put("updatedAt", Instant.now().toString())
@@ -138,7 +137,6 @@ public class ListingsService extends OrganisationService {
                         JsonObject typeQuery = new JsonObject()
                                 .put("_id", body.getString("listingType"))
                                 .put("organizationId",
-
                                         xusr.getString("organisationId"));
 
                         this.getDbUtils().findOne(
@@ -382,13 +380,11 @@ public class ListingsService extends OrganisationService {
         this.getUtils().execute2(MODULE + "createListingType", rc,
                 (xusr, body, params, headers, resp) -> {
                     // Add system fields
-                    body.put("organizationId",
-
-                            xusr.getString("organisationId"))
-                            .put("createdBy", xusr.getString("_id"))
-                            .put("createdAt", Instant.now().toString())
-                            .put("updatedAt", Instant.now().toString())
-                            .put("isActive", true);
+                    body.put("organizationId", xusr.getString("organisationId"))
+                        .put("createdBy", xusr.getString("_id"))
+                        .put("createdAt", Instant.now().toString())
+                        .put("updatedAt", Instant.now().toString())
+                        .put("isActive", true);
 
                     this.getUtils().assignRoleSaveFilters(xusr, body);
                     this.getDbUtils().save(Collections.LISTING_TYPES.toString(),
@@ -404,17 +400,17 @@ public class ListingsService extends OrganisationService {
     @SystemTasks(task = MODULE + "listListingTypes")
     private void listListingTypes(final RoutingContext rc) {
         this.getUtils().execute2(MODULE + "listListingTypes", rc,
-                (xusr, body, params, headers, resp) -> {
-                    this.getUtils().assignRoleQueryFilters(xusr, body, false);
+        (xusr, body, params, headers, resp) -> {
+                this.getUtils().assignRoleQueryFilters(xusr, body, false);
 
-                    // Default to active types only
-                    if (!body.containsKey("isActive")) {
+                // Default to active types only
+                if (!body.containsKey("isActive")) {
                         body.put("isActive", true);
-                    }
+                }
 
-                    this.getDbUtils().find(Collections.LISTING_TYPES.toString(),
-                            body, resp);
-                });
+                this.getDbUtils().find(Collections.LISTING_TYPES.toString(),
+                        body, resp);
+        });
     }
 
     /**

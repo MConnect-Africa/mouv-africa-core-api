@@ -153,5 +153,16 @@ public enum Collections {
         public String toString() {
             return "listing_discounts";
         }
+    },
+
+    /** Bookings. */
+    BOOKINGS {
+        /**
+         * Gets the String version.
+         * @return the string ersion
+         */
+        public String toString() {
+            return "bookings";
+        }
     }
 }

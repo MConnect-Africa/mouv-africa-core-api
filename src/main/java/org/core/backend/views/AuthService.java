@@ -16,7 +16,7 @@ import org.utils.backend.utils.Utils;
 /**
  * The authentication service.
  */
-public class AuthService extends ListingsService {
+public class AuthService extends BookingService {
 
     /**
      * The logger instance that is used to log.
@@ -51,7 +51,7 @@ public class AuthService extends ListingsService {
         router.post("/listinvites")
             .handler(this::listInvites);
 
-        this.setListingsRoutes(router);
+        this.setBookingServiceRoutes(router);
     }
 
     /**
@@ -278,6 +278,7 @@ public class AuthService extends ListingsService {
     private void getUserDetails(final RoutingContext rc) {
         this.getUtils().execute2(MODULE + "getUserDetails",
             rc, (xusr, body, params, headers, resp) -> {
+
             body.put("uid", xusr.getString("uid"));
             this.getDbUtils().findOne(Collections.USERS.toString(),
                 body, resp);
@@ -309,11 +310,8 @@ public class AuthService extends ListingsService {
                     + "{sjdhvjhscv}"
                     + "auth/invites/?inviteID=" + res.getString("inviteId");
 
-                this.getUtils().sendEmails(
-                    xusr, "Invite To Mouv Africa",
-                    new JsonArray().add(body.getString("email")),
-                    "opentemplate", new JsonObject()
-                        .put("content", message));
+                this.getUtils().emailByMailgun(body.getString("email"),
+                    "Hurrah !!! You Have Been Invited.", message, false, "");
             }, "opentemplate", fail -> {
                 resp.end(this.getUtils()
                     .getResponse(Utils.ERR_503, fail.getMessage()).encode());

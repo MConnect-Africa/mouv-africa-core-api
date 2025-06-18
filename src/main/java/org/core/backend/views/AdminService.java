@@ -31,15 +31,15 @@ public class AdminService extends RbacService {
         this.logger.info("set Admin routes -> ()");
 
         router.post("/createDocumentTypes")
-                .handler(this::createDocumentTypes);
+            .handler(this::createDocumentTypes);
         router.post("/listDocumentTypes")
-                .handler(this::listDocumentTypes);
+            .handler(this::listDocumentTypes);
         router.post("/addNewProducts")
-                .handler(this::addNewProducts);
+            .handler(this::addNewProducts);
         router.post("/listSideBarServices")
-                .handler(this::listSideBarServices);
+            .handler(this::listSideBarServices);
         router.post("/assignOrganisationNewProducts")
-                .handler(this::assignOrganisationNewProducts);
+            .handler(this::assignOrganisationNewProducts);
 
         this.setRbacRoutes(router);
     }
@@ -96,21 +96,21 @@ public class AdminService extends RbacService {
      */
     private void assignOrganisationNewProducts(final RoutingContext rc) {
         this.getUtils().execute2(MODULE + "assignOrganisationNewProducts", rc,
-                (usr, body, params, headers, resp) -> {
+            (usr, body, params, headers, resp) -> {
 
-                    this.getDbUtils().find(
-                            Collections.PRODUCTS.toString(), body, res -> {
+                this.getDbUtils().find(
+                        Collections.PRODUCTS.toString(), body, res -> {
 
-                                if (res == null || res.isEmpty()) {
-                                    resp.end(this.getUtils().getResponse(
-                                        Utils.ERR_404,
-                                            "Product Not found").encode());
-                                } else {
-                                    this.assignOrganisationNewProducts(
-                                        usr, body, res, resp);
-                                }
-                            }, resp);
-                });
+                            if (res == null || res.isEmpty()) {
+                                resp.end(this.getUtils().getResponse(
+                                    Utils.ERR_404,
+                                        "Product Not found").encode());
+                            } else {
+                                this.assignOrganisationNewProducts(
+                                    usr, body, res, resp);
+                            }
+                        }, resp);
+            });
     }
 
     /**
