@@ -25,6 +25,8 @@ public class BaseService extends AbstractVerticle {
     private Logger logger = LoggerFactory.getLogger(
         BaseService.class.getName());
 
+    /** the double value 100.0. */
+    public static final double HUNDRED = 100.0;
 
     /**
      * The db utils instance.

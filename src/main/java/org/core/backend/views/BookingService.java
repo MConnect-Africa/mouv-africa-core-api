@@ -67,7 +67,6 @@ public class BookingService extends ListingsService {
                     Collections.BOOKINGS.toString(),
                         body, resp);
         });
-
     }
 
     /**
@@ -93,7 +92,7 @@ public class BookingService extends ListingsService {
                         JsonObject query = new JsonObject()
                             .put("endDate", new JsonObject()
                                 .put("$lte", startDate.getTime()))
-                            .put("status", "ACTIVE");
+                            .put("status", Status.ACTIVE.name());
 
                         this.getDbUtils().findOne(
                             Collections.BOOKINGS.toString(), query, res -> {
@@ -259,15 +258,21 @@ public class BookingService extends ListingsService {
         // the payable amenities used.
         // VAT
         // Loading amount
-        double totalStatutoryPremiums
-            = this.calculateTaxes(new JsonArray(), ZERO_DOUBLE);
-        double basicPremium = listing.getDouble("basicPremium");
+
+        JsonObject premium = listing.getJsonObject(
+            "prenium", new JsonObject());
+        double basicPremium = premium.getDouble("basicPremium");
+
+        double totalStatutoryPremiums = this.calculateTaxes(
+            premium.getJsonArray("statutoryPremiums"), ZERO_DOUBLE);
+        double totalLoadingAmounts = this.calculateTaxes(
+            premium.getJsonArray("loadingAmounts"), ZERO_DOUBLE);
 
         double amount = basicPremium
             + totalStatutoryPremiums;
 
         return new JsonObject()
-            .put("basicPremium", listing.getDouble("basicPremium"))
+            .put("basicPremium", basicPremium)
             .put("totalStatutoryPremiums", totalStatutoryPremiums)
             .put("amount", amount);
     }
@@ -294,7 +299,7 @@ public class BookingService extends ListingsService {
                         tax.put("value", amount);
                     } else {
                         result += (amount * basicPremium);
-                        tax.put("value", (amount * basicPremium));
+                        tax.put("value", ((amount * basicPremium) / HUNDRED));
                     }
                 }
             }
