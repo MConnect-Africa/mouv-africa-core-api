@@ -1,6 +1,8 @@
 package org.core.backend.views;
 
 import io.vertx.ext.web.Router;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
 import org.core.backend.models.Collections;
 import org.core.backend.models.Status;
@@ -12,8 +14,7 @@ import org.utils.backend.utils.Utils;
 import org.utils.backend.utils.SystemTasks;
 
 import io.vertx.core.http.HttpServerResponse;
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
+
 
 import io.vertx.ext.web.RoutingContext;
 
@@ -26,11 +27,6 @@ import io.vertx.ext.web.RoutingContext;
 public class ListingsServiceV2 extends OrganisationService {
 
     /**
-     * Maximum percentage value for discounts.
-     */
-    private static final int MAX_PERCENTAGE_DISCOUNT = 100;
-
-    /**
      * The logger instance that is used to log.
      */
     private Logger logger = LoggerFactory.getLogger(
@@ -41,7 +37,7 @@ public class ListingsServiceV2 extends OrganisationService {
      * @param router The router used to set paths.
      */
     protected void setListingsV2Routes(final Router router) {
-        this.logger.info("setListingsRoutes -> ()");
+        this.logger.info("setListingsV2Routes -> ()");
 
         router.post("/createListingTypes")
             .handler(this::createListingTypes);
@@ -111,7 +107,7 @@ public class ListingsServiceV2 extends OrganisationService {
                     xusr, body, false);
 
                 this.getDbUtils().find(
-                    Collections.LISTING_TYPES.toString(), body, resp);
+                    Collections.LISTINGS.toString(), body, resp);
         });
     }
 
@@ -142,7 +138,8 @@ public class ListingsServiceV2 extends OrganisationService {
                     "statutoryPremiums", resp);
 
                     body.put("status", Status.ACTIVE.name());
-                    this.createPremiumObj(body, resp);
+                    this.createPremiumObj(body, body.getDouble("amount"), resp);
+                    body.remove("amount");
 
                     this.getUtils().assignRoleSaveFilters(xusr, body);
                     this.getDbUtils().save(Collections.LISTINGS.toString(),
@@ -152,7 +149,6 @@ public class ListingsServiceV2 extends OrganisationService {
                     resp.end(this.getUtils().getResponse(
                         Utils.ERR_502, e.getMessage()).encode());
                 }
-
         }, "longitude", "latitude", "name", "description", "amount",
             "listingType");
     }
@@ -161,55 +157,88 @@ public class ListingsServiceV2 extends OrganisationService {
      * Creates the listings.
      * @param rc The routing context
      */
-    @SystemTasks(task = MODULE + "listListings")
+    @SystemTasks(task = MODULE + "updateListings")
     private void updateListings(final RoutingContext rc) {
-        this.getUtils().execute2(MODULE + "listListings", rc,
+        this.getUtils().execute2(MODULE + "updateListings", rc,
             (xusr, body, params, headers, resp) -> {
                 try {
-
-                    JsonObject updates = body.copy();
-
-                    if (updates.containsKey("amenities")) {
-                        this.validatePremiumArrays(body,
-                            updates.getJsonArray("amenities", new JsonArray()),
-                        "amenities", resp);
-                    }
-
-                    if (updates.containsKey("discounts")) {
-                        this.validatePremiumArrays(body,
-                            body.getJsonArray("discounts", new JsonArray()),
-                        "discounts", resp);
-                    }
-
-                    if (updates.containsKey("loadings")) {
-                        this.validatePremiumArrays(body,
-                            body.getJsonArray("loadings", new JsonArray()),
-                        "loadings", resp);
-                    }
-
-                    if (updates.containsKey("statutoryPremiums")) {
-                        this.validatePremiumArrays(body,
-                            body.getJsonArray("statutoryPremiums",
-                                new JsonArray()), "statutoryPremiums", resp);
-                    }
-
-                    if (updates.containsKey("amount")) {
-                        this.createPremiumObj(body, resp);
-                    }
-
-                    JsonObjct qry = new JsonObject()
+                    JsonObject qry = new JsonObject()
                         .put("_id", body.getString("_id"));
 
-                    updates.remove("_id");
-                    this.getDbUtils().findOneAndUpdate(
-                        Collections.LISTINGS.toString(), qry, updates, resp);
+                    this.getDbUtils().findOne(
+                        Collections.LISTINGS.toString(), qry, res -> {
+
+                            if (res == null || res.isEmpty()) {
+                                resp.end(this.getUtils().getResponse(
+                                    Utils.ERR_502,
+                                    "Listing is missing !!!").encode());
+                            } else {
+                                this.updateLising(res, body, resp);
+                            }
+
+                    }, resp);
+
                 } catch (final Exception e) {
                     this.logger.error(e.getMessage(), e);
                     resp.end(this.getUtils().getResponse(
                         Utils.ERR_502, e.getMessage()).encode());
                 }
 
-        }, "_id", "update");
+        }, "_id");
+    }
+
+    /**
+     * Update sthe listing.
+     * @param listing The listing param.
+     * @param body The body from the FE
+     * @param resp The server response.
+     */
+    protected void updateLising(final JsonObject listing,
+        final JsonObject body, final HttpServerResponse resp) {
+        try {
+            JsonObject updates = body.copy();
+
+            if (updates.containsKey("amenities")) {
+                this.validatePremiumArrays(listing,
+                    updates.getJsonArray("amenities", new JsonArray()),
+                "amenities", resp);
+            }
+
+            if (updates.containsKey("discounts")) {
+                this.validatePremiumArrays(listing,
+                    updates.getJsonArray("discounts", new JsonArray()),
+                "discounts", resp);
+            }
+
+            if (updates.containsKey("loadings")) {
+                this.validatePremiumArrays(listing,
+                    updates.getJsonArray("loadings", new JsonArray()),
+                "loadings", resp);
+            }
+
+            if (updates.containsKey("statutoryPremiums")) {
+                this.validatePremiumArrays(listing,
+                    updates.getJsonArray("statutoryPremiums",
+                        new JsonArray()), "statutoryPremiums", resp);
+            }
+
+            if (updates.containsKey("amount")) {
+                this.createPremiumObj(listing,
+                    updates.getDouble("amount"), resp);
+            }
+
+            JsonObject qry = new JsonObject()
+                .put("_id", updates.getString("_id"));
+
+            listing.remove("_id");
+            System.out.println(listing.encode());
+            this.getDbUtils().findOneAndUpdate(
+                Collections.LISTINGS.toString(), qry, listing, resp);
+        } catch (final Exception e) {
+            this.logger.error(e.getMessage(), e);
+            resp.end(this.getUtils().getResponse(
+                Utils.ERR_502, e.getMessage()).encode());
+        }
     }
 
     /**
@@ -240,7 +269,9 @@ public class ListingsServiceV2 extends OrganisationService {
                             }
                         }
                     }
-
+                    body.put("premium", body.getJsonObject(
+                        "premium", new JsonObject())
+                            .put(field, premiums));
                 } else {
 
                     body.put("premium", body.getJsonObject(
@@ -257,17 +288,14 @@ public class ListingsServiceV2 extends OrganisationService {
 
     /**
      * Creates the premium object.
-     * @param body The body from the FE
+     * @param listing The listing from the db
+     * @param amount The amount passed.
      * @param resp The server response.
      */
-    protected void createPremiumObj(final JsonObject body,
-        final HttpServerResponse resp) {
-        if (this.getUtils().isValid(body, "amount")) {
-            body.put("premium", body.getJsonObject("premium", new JsonObject())
-                .put("basicPremium", body.getDouble("amount", ZERO_DOUBLE)));
-        } else {
-            resp.end(this.getUtils().getResponse(Utils.ERR_503,
-                "Field amount is missing when creating premiums").encode());
-        }
+    protected void createPremiumObj(final JsonObject listing,
+        final double amount, final HttpServerResponse resp) {
+        listing.put("premium", listing.getJsonObject(
+                "premium", new JsonObject())
+            .put("basicPremium", amount));
     }
 }
