@@ -9,6 +9,8 @@ import org.slf4j.LoggerFactory;
 import org.utils.backend.models.Collections;
 import org.utils.backend.utils.SystemTasks;
 
+import org.utils.backend.utils.Utils;
+
 
 /**
  * The Rbac servce.
@@ -60,46 +62,80 @@ public class RbacService extends PaymentsService {
     private void adminAddNewRbacTask(final RoutingContext rc) {
         this.getUtils().execute2(MODULE + "adminAddNewRbacTask", rc,
         (xusr, body, params, headers, resp) -> {
-            JsonObject qry = new JsonObject()
-                .put("task", body.getString("task", "NA"));
+            try {
 
-            this.getUtils().assignRoleQueryFilters(
-                xusr, body, true);
-            JsonArray roles = body.getJsonArray("roles",
-                body.getJsonArray("role", new JsonArray()));
+                JsonObject qry = new JsonObject()
+                    .put("task", body.getString("task", "NA"));
 
-            this.getDbUtils().findOne(Collections.RBAC_TASKS.toString(),
-                qry, (result) -> {
-                    if (result == null || result.isEmpty()) {
+                this.getUtils().assignRoleQueryFilters(
+                    xusr, body, true);
+                JsonArray roles = body.getJsonArray("roles",
+                    body.getJsonArray("role", new JsonArray()));
 
-                        JsonObject task = new JsonObject()
-                            .put("task", body.getString("task"));
+                this.validateRolesArray(roles);
+                this.getDbUtils().findOne(Collections.RBAC_TASKS.toString(),
+                    qry, (result) -> {
+                        if (result == null || result.isEmpty()) {
 
-                        for (int i = 0; i < roles.size(); i++) {
-                            this.getUtils().setUserRoles(task,
-                                roles.getJsonObject(i)
-                                    .getString("role"));
+                            JsonObject task = new JsonObject()
+                                .put("task", body.getString("task"));
+
+                            for (int i = 0; i < roles.size(); i++) {
+                                this.getUtils().setUserRoles(task,
+                                    roles.getJsonObject(i)
+                                        .getString("role"));
+                            }
+                            this.getUtils().assignRoleSaveFilters(xusr, task);
+                            this.getDbUtils().save(
+                                Collections.RBAC_TASKS.toString(),
+                                    task, headers, resp);
+                        } else {
+
+                            for (int i = 0; i < roles.size(); i++) {
+                                this.getUtils().setUserRoles(result,
+                                    roles.getString(i));
+                            }
+
+                            this.getDbUtils().save(
+                                Collections.RBAC_TASKS.toString(),
+                                    result, headers, resp);
                         }
-                        this.getUtils().assignRoleSaveFilters(xusr, task);
-                        this.getDbUtils().save(
-                            Collections.RBAC_TASKS.toString(),
-                                task, headers, resp);
-                    } else {
 
-                        for (int i = 0; i < roles.size(); i++) {
-                            this.getUtils().setUserRoles(result,
-                                roles.getString(i));
-                        }
-
-                        this.getDbUtils().save(
-                            Collections.RBAC_TASKS.toString(),
-                                result, headers, resp);
-                    }
-
-                }, resp);
-            }, "task", "roles");
+                    }, resp);
+            } catch (final Exception e) {
+                this.logger.error(e.getMessage(), e);
+                resp.end(this.getUtils().getResponse(
+                    Utils.ERR_502, e.getMessage()).encode());
+            }
+        }, "task", "roles");
     }
 
+    /**
+     * Validates the roles array.
+     * @param roles the roles array
+     */
+    private void validateRolesArray(final JsonArray roles)
+        throws Exception {
+        boolean shouldThrowException = false;
+        if (roles != null && !roles.isEmpty()) {
+            for (int i = 0; i < roles.size(); i++) {
+                if (roles.getJsonObject(i) != null) {
+                    JsonObject role = roles.getJsonObject(i);
+                    if (!role.containsKey("role")) {
+                        shouldThrowException = true;
+                        break;
+                    }
+                }
+
+            }
+        }
+
+        if (shouldThrowException) {
+            throw new Exception(
+                "Roles array should have objects with field role");
+        }
+
+    }
 
     /**
      * Deletes the rbac task.

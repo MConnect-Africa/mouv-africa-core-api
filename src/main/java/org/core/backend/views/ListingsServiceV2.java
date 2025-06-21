@@ -171,7 +171,7 @@ public class ListingsServiceV2 extends OrganisationService {
                             if (res == null || res.isEmpty()) {
                                 resp.end(this.getUtils().getResponse(
                                     Utils.ERR_502,
-                                    "Listing is missing !!!").encode());
+                                        "Listing is missing !!!").encode());
                             } else {
                                 this.updateLising(res, body, resp);
                             }
@@ -229,9 +229,8 @@ public class ListingsServiceV2 extends OrganisationService {
 
             JsonObject qry = new JsonObject()
                 .put("_id", updates.getString("_id"));
-
             listing.remove("_id");
-            System.out.println(listing.encode());
+
             this.getDbUtils().findOneAndUpdate(
                 Collections.LISTINGS.toString(), qry, listing, resp);
         } catch (final Exception e) {
@@ -263,7 +262,7 @@ public class ListingsServiceV2 extends OrganisationService {
                                 resp.end(this.getUtils().getResponse(
                                     Utils.ERR_502,
                                     "All " + field + " should have name, "
-                                        + "isAmount and amount foields")
+                                        + "isAmount and amount fields")
                                 .encode());
                                 break;
                             }

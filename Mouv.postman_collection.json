@@ -1,0 +1,266 @@
+{
+	"info": {
+		"_postman_id": "12150dc1-1699-43f0-b7ec-2f2021cc5fad",
+		"name": "Mouv",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "5585089"
+	},
+	"item": [
+		{
+			"name": "localhost:8201/listSideBarServices",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "SKEY",
+						"value": "eyJhbGciOiJSUzI1NiIsImtpZCI6IjY3ZDhjZWU0ZTYwYmYwMzYxNmM1ODg4NTJiMjA5MTZkNjRjMzRmYmEiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vbW91di1hZnJpY2EiLCJhdWQiOiJtb3V2LWFmcmljYSIsImF1dGhfdGltZSI6MTc0NzcyNzQ0MywidXNlcl9pZCI6ImhxMThSVWN5WGdaM1FMWWlMUUQ4ekpkSld6NjIiLCJzdWIiOiJocTE4UlVjeVhnWjNRTFlpTFFEOHpKZEpXejYyIiwiaWF0IjoxNzQ3NzI3NDQzLCJleHAiOjE3NDc3MzEwNDMsImVtYWlsIjoiZGstZGVubm9AdGVzdC5jb20iLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsImZpcmViYXNlIjp7ImlkZW50aXRpZXMiOnsiZW1haWwiOlsiZGstZGVubm9AdGVzdC5jb20iXX0sInNpZ25faW5fcHJvdmlkZXIiOiJwYXNzd29yZCJ9fQ.obZpRicJAaA5jQwfg0aG2FmaCj0pBW-Xr_RWdeGCtopsdcdyYDGErwq1C8LOByb6UyM-cFu9ZLS8BKDNH--2jYxB_ewMkpbb3QgFXe6ZEm4YzdoJ7lKKG0rCmvFRd-drLD6_X6bmjVpduThoc-CAP5UMOU_NUBmr_a5B2nApmgOkv6JKv0z_4YyxV7578XHu1iNkp8Yi-Un_ektNRkmvtlK2_6oF_cs5PLt3hOmeoZ9m1cY0ilOoyXBH0huY2pmtx28n21DE4UzWfh3W7Pj4pek6nb7tnZFByNmUmJ7CfnetcxpTfSvVt2LDdrBJrGIYDHaEcSm9Ks5JLppLpo6OCQ",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:8201/listSideBarServices",
+					"host": [
+						"localhost"
+					],
+					"port": "8201",
+					"path": [
+						"listSideBarServices"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "https://www.googleapis.com/identitytoolkit/v3/relyingparty/verifyPassword?key=AIzaSyBqkPnFO4DAFgSaLXnRuS4GxMRchIoiX_c",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"email\": \"superadmin@gmail.com\",\n    \"password\": \"ThisIsMyPassword23@\",\n    \"returnSecureToken\": true\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://www.googleapis.com/identitytoolkit/v3/relyingparty/verifyPassword?key=AIzaSyBqkPnFO4DAFgSaLXnRuS4GxMRchIoiX_c",
+					"protocol": "https",
+					"host": [
+						"www",
+						"googleapis",
+						"com"
+					],
+					"path": [
+						"identitytoolkit",
+						"v3",
+						"relyingparty",
+						"verifyPassword"
+					],
+					"query": [
+						{
+							"key": "key",
+							"value": "AIzaSyBqkPnFO4DAFgSaLXnRuS4GxMRchIoiX_c"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "https://apis.mconnect.africa/core/getuserdetails",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "SKEY",
+						"value": "yJhbGciOiJSUzI1NiIsImtpZCI6ImE0YTEwZGVjZTk4MzY2ZDZmNjNlMTY3Mjg2YWU5YjYxMWQyYmFhMjciLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vbW91di1hZnJpY2EiLCJhdWQiOiJtb3V2LWFmcmljYSIsImF1dGhfdGltZSI6MTc0OTkyMjA2MiwidXNlcl9pZCI6ImhxMThSVWN5WGdaM1FMWWlMUUQ4ekpkSld6NjIiLCJzdWIiOiJocTE4UlVjeVhnWjNRTFlpTFFEOHpKZEpXejYyIiwiaWF0IjoxNzQ5OTIyMDYyLCJleHAiOjE3NDk5MjU2NjIsImVtYWlsIjoiZGstZGVubm9AdGVzdC5jb20iLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsImZpcmViYXNlIjp7ImlkZW50aXRpZXMiOnsiZW1haWwiOlsiZGstZGVubm9AdGVzdC5jb20iXX0sInNpZ25faW5fcHJvdmlkZXIiOiJwYXNzd29yZCJ9fQ.iCuC8hqhl61Bg749MOH3COGYRakBuXbyiUo5TzABrglua-TZBjfl5Xye8sI-Y3eYnYKLcceLsTCCcwSjHjXvLlSfJwvtjGjs_Be-qPq_8phLe8V_LbmryRN_DDcp9v6TZlb0ylRvttDyNjYealstn-1JyIqE3tQzcqcqHSfBIHyw223Xw-iFpfBkguaAZE1ivHqip5j3159wq4M0KswFqFro0NpNuBzdU1bf_Hh0nhOh9nH-Yh99q-DiFyu7JO-CWXjFGIbHuhOPLAcAB8p0eqWCIHcyMLZsN_RM9ECDsGT--utT5RbPHAJTEUfWvNecx7VUrcxx7XpoTrSWDvFSvQ",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://apis.mconnect.africa/core/getuserdetails",
+					"protocol": "https",
+					"host": [
+						"apis",
+						"mconnect",
+						"africa"
+					],
+					"path": [
+						"core",
+						"getuserdetails"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "{{baseUrl}}/updateListings",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "SKEY",
+						"value": "{{skey}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"_id\": \"6852d9abb78d1e29a8143775\",\n    // \"statutoryPremiums\": [\n    //         {\n    //             \"name\":\"VAT\",\n    //             \"isAmount\":false,\n    //             \"amount\":10\n    //         }\n    // ]\n    \"amount\":100.0\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/updateListings",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"updateListings"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "{{baseUrl}}/listListings",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "skey",
+						"value": "{{skey}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"_id\": \"6852d9abb78d1e29a8143775\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/listListings",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"listListings"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "{{baseUrl}}/createListings",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "skey",
+						"value": "{{skey}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    // \"listingType\": \"6852bb326ba6d308120bfaa9\",\n    // \"title\": \"Test apartment\",\n    // \"amount\": 200.0\n\n\n    \"longitude\":30.2122, \n    \"latitude\":30.0001, \n    \"name\":\"The villa\", \n    \"description\":\"This sia a 5 bedroom villa with blah blah blah and blah blah blah. Its fitted with blah blah blah\", \n    \"amount\": 2000,\n    \"listingType\":\"6852bb326ba6d308120bfaa9\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/createListings",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"createListings"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "{{baseUrl}}/listListingTypes",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "skey",
+						"value": "{{skey}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/listListingTypes",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"listListingTypes"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
