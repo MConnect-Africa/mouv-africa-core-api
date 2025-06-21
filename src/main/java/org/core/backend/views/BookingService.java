@@ -43,6 +43,9 @@ public class BookingService extends ListingsService {
             .handler(this::searchForValidBookingWindow);
         router.post("/makeABooking")
             .handler(this::makeABooking);
+        router.post("/listBookings")
+            .handler(this::listBookings);
+
 
         this.setListingsRoutes(router);
     }
@@ -106,7 +109,6 @@ public class BookingService extends ListingsService {
                                         "This unit already has a booking")
                                     .encode());
                                 }
-
                         }, resp);
                     } else {
                         resp.end(this.getUtils().getResponse(
@@ -153,12 +155,12 @@ public class BookingService extends ListingsService {
                         this.convertTimestampToDate(endDate))
                         + Utils.M_1)
                     .put("startDate", startDate).put("endDate", endDate)
-                    .put("listingId", body.getLong("listingId"))
+                    .put("listingId", body.getString("listingId"))
                     .put("status", Status.PENDING.toString())
                     .put("amenities",
                         body.getJsonArray("amenities", new JsonArray()));
 
-                this.makeABooking(booking, xusr, body, resp);
+                this.makeABooking(xusr, booking, body, resp);
             } catch (final Exception e) {
                 this.logger.error(e.getMessage(), e);
                 resp.end(this.getUtils().getResponse(
@@ -215,29 +217,37 @@ public class BookingService extends ListingsService {
         final JsonObject booking, final JsonObject listing,
         final JsonObject body, final HttpServerResponse resp) {
 
-            if (this.getUtils().isValid(xusr)
-                && this.getUtils().isValid(booking)
-                && this.getUtils().isValid(listing)
-                && this.getUtils().isValid(body)) {
+            try {
+                if (this.getUtils().isValid(xusr)
+                    && this.getUtils().isValid(booking)
+                    && this.getUtils().isValid(listing)
+                    && this.getUtils().isValid(body)) {
 
-                booking.put("organisationId", xusr.getString("organisationId"))
-                    .put("feduid", xusr.getString("feduid"))
-                    .put("clientId", xusr.getString("_id"))
-                    .put("receipt", this.createReceiptForTransaction(
-                        xusr, booking, listing, body));
+                    this.getUtils().assignRoleSaveFilters(listing, booking);
+                    booking
+                        .put("feduid", xusr.getString("feduid"))
+                        .put("clientId", xusr.getString("_id"))
+                        .put("receipt", this.createReceiptForTransaction(
+                            xusr, booking, listing, body));
 
-                this.getDbUtils().save(Collections.BOOKINGS.toString(),
-                    booking, null, () -> {
-                        resp.end(this.getUtils().getResponse(booking).encode());
-                        // send new to alert pending booking.
-                }, fail -> {
+                    this.getDbUtils().save(Collections.BOOKINGS.toString(),
+                        booking, null, () -> {
+                            resp.end(this.getUtils().getResponse(
+                                booking).encode());
+                            // send new to alert pending booking.
+                    }, fail -> {
+                        resp.end(this.getUtils().getResponse(
+                            Utils.ERR_506, fail.getMessage()).encode());
+                    });
+
+                } else {
                     resp.end(this.getUtils().getResponse(
-                        Utils.ERR_506, fail.getMessage()).encode());
-                });
-
-            } else {
+                        Utils.ERR_506, "Please pass valid params").encode());
+                }
+            } catch (final Exception e) {
+                this.logger.error(e.getMessage(), e);
                 resp.end(this.getUtils().getResponse(
-                    Utils.ERR_506, "Please pass valid params").encode());
+                    Utils.ERR_502, e.getMessage()).encode());
             }
 
     }
@@ -260,20 +270,31 @@ public class BookingService extends ListingsService {
         // Loading amount
 
         JsonObject premium = listing.getJsonObject(
-            "prenium", new JsonObject());
-        double basicPremium = premium.getDouble("basicPremium");
+            "premium", new JsonObject());
+        System.out.println(premium.encode());
+        double basicPremium = premium.getDouble("basicPremium",
+            Utils.ZERO_DOUBLE);
 
         double totalStatutoryPremiums = this.calculateTaxes(
             premium.getJsonArray("statutoryPremiums"), ZERO_DOUBLE);
         double totalLoadingAmounts = this.calculateTaxes(
-            premium.getJsonArray("loadingAmounts"), ZERO_DOUBLE);
+            premium.getJsonArray("loadings"), ZERO_DOUBLE);
+        double totalDiscountsAmounts = this.calculateTaxes(
+            premium.getJsonArray("discounts"), ZERO_DOUBLE);
+        double totalAmenitiesAmounts = this.calculateTaxes(
+            premium.getJsonArray("amenities"), ZERO_DOUBLE);
 
         double amount = basicPremium
-            + totalStatutoryPremiums;
+            + totalStatutoryPremiums
+            + totalLoadingAmounts
+            - totalDiscountsAmounts;
 
         return new JsonObject()
             .put("basicPremium", basicPremium)
             .put("totalStatutoryPremiums", totalStatutoryPremiums)
+            .put("totalLoadingAmounts", totalLoadingAmounts)
+            .put("totalDiscountsAmounts", totalDiscountsAmounts)
+            .put("totalAmenitiesAmounts", totalAmenitiesAmounts)
             .put("amount", amount);
     }
 
@@ -306,5 +327,29 @@ public class BookingService extends ListingsService {
             return result;
         }
         return ZERO_DOUBLE;
+    }
+
+    /**
+     * Lists the bookings.
+     * @param rc The routing context.
+     */
+    protected void listBookings(final RoutingContext rc) {
+        this.getUtils().execute2(MODULE + "listBookings", rc,
+            (xusr, body, params, headers, resp) -> {
+
+                // Apply role-based query filters
+                this.getUtils().assignRoleQueryFilters(
+                    xusr, body, false);
+
+                if (this.getUtils().isRole("client", xusr)) {
+                    body.put("feduid", xusr.getString("feduid"));
+                }
+                // Add search functionality for custom fields
+                this.getUtils().addFieldsToSearchQuery(body);
+
+                this.getDbUtils().find(
+                    Collections.BOOKINGS.toString(),
+                        body, resp);
+        });
     }
 }
