@@ -337,19 +337,44 @@ public class BookingService extends ListingsService {
         this.getUtils().execute2(MODULE + "listBookings", rc,
             (xusr, body, params, headers, resp) -> {
 
-                // Apply role-based query filters
-                this.getUtils().assignRoleQueryFilters(
-                    xusr, body, false);
-
-                if (this.getUtils().isRole("client", xusr)) {
-                    body.put("feduid", xusr.getString("feduid"));
-                }
-                // Add search functionality for custom fields
-                this.getUtils().addFieldsToSearchQuery(body);
-
-                this.getDbUtils().find(
-                    Collections.BOOKINGS.toString(),
-                        body, resp);
+                this.getDbUtils().aggregate(Collections.BOOKINGS.toString(),
+                    this.createQueryForListings(xusr, body), resp);
+                // this.getDbUtils().aggregate(
+                //     Collections.BOOKINGS.toString(),
+                //         body, resp);
         });
+    }
+
+    /**
+     * Creates the aggregate query for listing.
+     * @param xusr The user object
+     * @param body The body by the FE
+     * @return pipeline for the query sent
+     */
+    private JsonArray createQueryForListings(final JsonObject xusr,
+        final JsonObject body) {
+        this.logger.info("createQueryForListings -> ()");
+        // Apply role-based query filters
+        this.getUtils().assignRoleQueryFilters(
+            xusr, body, false);
+
+        if (this.getUtils().isRole("client", xusr)) {
+            body.put("feduid", xusr.getString("feduid"));
+        }
+        // Add search functionality for custom fields
+        this.getUtils().addFieldsToSearchQuery(body);
+
+        JsonObject lookup = new JsonObject()
+            .put("from", Collections.LISTINGS.toString())
+            .put("localField", "listingId")
+            .put("foreignField", "_id")
+            .put("as", "listing");
+
+        return new JsonArray()
+            .add(new JsonObject()
+                .put("$lookup", lookup))
+            .add(new JsonObject()
+                .put("$match", body));
+
     }
 }
