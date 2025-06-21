@@ -93,7 +93,7 @@ public class RbacService extends PaymentsService {
 
                             for (int i = 0; i < roles.size(); i++) {
                                 this.getUtils().setUserRoles(result,
-                                    roles.getString(i));
+                                    roles.getJsonObject(i).getString("role"));
                             }
 
                             this.getDbUtils().save(
