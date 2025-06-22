@@ -194,7 +194,7 @@ public class OrganisationService extends AdminService {
                     .put("_id", body.getString("_id"));
 
                 JsonObject update = new JsonObject()
-                    .put("status", body.getBoolean("status"))
+                    .put("status", body.getString("status"))
                     .put("remarks", body.getString("remarks"));
 
                 this.getUtils().addUserToObject(
