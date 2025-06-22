@@ -160,6 +160,17 @@ public class BookingService extends ListingsService {
                     .put("amenities",
                         body.getJsonArray("amenities", new JsonArray()));
 
+                    body.fieldNames().forEach(key -> {
+                        if (!key.equalsIgnoreCase("listingId")
+                        && !key.equalsIgnoreCase("organisationId")
+                        && !key.equalsIgnoreCase("feduid")
+                        && !key.equalsIgnoreCase("client")
+                        && !key.equalsIgnoreCase("numberOfDays")
+                        && !key.equalsIgnoreCase("clientId")) {
+                            booking.put(key, body.getValue(key));
+                        }
+                    });
+
                 this.makeABooking(xusr, booking, body, resp);
             } catch (final Exception e) {
                 this.logger.error(e.getMessage(), e);
@@ -370,11 +381,39 @@ public class BookingService extends ListingsService {
             .put("foreignField", "_id")
             .put("as", "listing");
 
+        JsonObject listingTypeLookUp = new JsonObject()
+            .put("from", Collections.LISTING_TYPES.toString())
+            .put("localField", "listing.listingType")
+            .put("foreignField", "_id")
+            .put("as", "listingType");
+
+        JsonObject clientLookUp = new JsonObject()
+            .put("from", Collections.USERS.toString())
+            .put("localField", "feduid")
+            .put("foreignField", "feduid")
+            .put("as", "client");
+
         return new JsonArray()
+            .add(new JsonObject()
+                .put("$match", body))
             .add(new JsonObject()
                 .put("$lookup", lookup))
             .add(new JsonObject()
-                .put("$match", body));
+                .put("$lookup", new JsonObject()
+                    .put("path", "$listing")
+                    .put("preserveNullAndEmptyArrays", true)))
+            .add(new JsonObject()
+                .put("$lookup", listingTypeLookUp))
+            .add(new JsonObject()
+                .put("$lookup", new JsonObject()
+                    .put("path", "$listingType")
+                    .put("preserveNullAndEmptyArrays", true)))
+            .add(new JsonObject()
+                .put("$lookup", clientLookUp))
+            .add(new JsonObject()
+                .put("$lookup", new JsonObject()
+                    .put("path", "$client")
+                    .put("preserveNullAndEmptyArrays", true)));
 
     }
 }

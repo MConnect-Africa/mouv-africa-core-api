@@ -43,6 +43,13 @@ public class OrganisationService extends AdminService {
             .handler(this::listOrganisations);
         router.post("/listStatuses")
             .handler(this::listStatuses);
+        router.post("/cleanUp")
+            .handler(this::cleanUp);
+        router.post("/approveOrganisation")
+            .handler(this::approveOrganisation);
+        router.post("/approveUser")
+            .handler(this::approveUser);
+
 
         this.setAdminRoutes(router);
 
@@ -149,7 +156,7 @@ public class OrganisationService extends AdminService {
     private void getOrganisation(final RoutingContext rc) {
         this.getUtils().execute2(MODULE + "getOrganisation", rc,
                 (xusr, body, params, headers, resp) -> {
-                    this.getUtils().assignRoleQueryFilters(xusr, body, false);
+                    this.getUtils().assignRoleQueryFilters(xusr, body, true);
                     this.getDbUtils().find(Collections.ORGANISATION.toString(),
                             body, resp);
                 });
@@ -177,11 +184,60 @@ public class OrganisationService extends AdminService {
      * Update an organisation.
      * @param rc The routing context.
      */
+    @SystemTasks(task = MODULE + "approveOrganisation")
+    private void approveOrganisation(final RoutingContext rc) {
+        this.getUtils().execute2(MODULE + "approveOrganisation", rc,
+            (xusr, body, params, headers, resp) -> {
+                JsonObject qry = new JsonObject()
+                    .put("_id", body.getString("_id"));
+
+                JsonObject update = new JsonObject()
+                    .put("status", body.getBoolean("status"))
+                    .put("remarks", body.getString("remarks"));
+
+                this.getUtils().addUserToObject(
+                    "approvalBy", xusr, update);
+
+                this.getDbUtils().findOneAndUpdate(
+                        Collections.ORGANISATION.toString(),
+                        qry, update, resp);
+            }, "status", "_id", "remarks");
+    }
+
+
+    /**
+     * Update an organisation.
+     * @param rc The routing context.
+     */
+    @SystemTasks(task = MODULE + "approveUser")
+    private void approveUser(final RoutingContext rc) {
+        this.getUtils().execute2(MODULE + "approveUser", rc,
+            (xusr, body, params, headers, resp) -> {
+                JsonObject qry = new JsonObject()
+                    .put("_id", body.getString("_id"));
+
+                JsonObject update = new JsonObject()
+                    .put("status", body.getString("status"))
+                    .put("remarks", body.getString("remarks"));
+
+                this.getUtils().addUserToObject(
+                    "approvalBy", xusr, update);
+
+                this.getDbUtils().findOneAndUpdate(
+                        Collections.USERS.toString(),
+                        qry, update, resp);
+            }, "status", "_id", "remarks");
+    }
+
+    /**
+     * Update an organisation.
+     * @param rc The routing context.
+     */
     @SystemTasks(task = MODULE + "listOrganisations")
     private void listOrganisations(final RoutingContext rc) {
         this.getUtils().execute2(MODULE + "listOrganisations", rc,
             (xusr, body, params, headers, resp) -> {
-                this.getUtils().assignRoleSaveFilters(xusr, body);
+                this.getUtils().assignRoleQueryFilters(xusr, body, true);
                 this.getDbUtils().find(Collections.ORGANISATION.toString(),
                         body, resp);
             });
@@ -195,14 +251,14 @@ public class OrganisationService extends AdminService {
     @SystemTasks(task = MODULE + "listStatuses")
     private void listStatuses(final RoutingContext rc) {
         this.getUtils().execute2(MODULE + "listStatuses", rc,
-                (xusr, body, params, headers, resp) -> {
-                    JsonArray results = new JsonArray();
-                    for (Status status : Status.values()) {
-                        results.add(new JsonObject()
-                                .put("name", status.name()));
-                    }
-                    resp.end(this.getUtils().getResponse(results).encode());
-                });
+            (xusr, body, params, headers, resp) -> {
+                JsonArray results = new JsonArray();
+                for (Status status : Status.values()) {
+                    results.add(new JsonObject()
+                            .put("name", status.name()));
+                }
+                resp.end(this.getUtils().getResponse(results).encode());
+            });
     }
 
     /**
@@ -223,7 +279,14 @@ public class OrganisationService extends AdminService {
                 .add("auth-adminFetchRbacTasks")
                 .add("auth-listUsers")
                 .add("auth-addRoles")
-                .add("auth-listTasks");
+                .add("auth-listTasks")
+                .add("auth-createListings")
+                .add("auth-listListings")
+                .add("auth-listListingTypes")
+                .add("auth-createListingType")
+                .add("auth-listBookings")
+                .add("auth-makeABooking")
+                .add("auth-listBookings");
 
         for (int i = Utils.ZERO; i < tasks.size(); i++) {
 
@@ -241,5 +304,20 @@ public class OrganisationService extends AdminService {
             this.getDbUtils().save(
                     Collections.RBAC_TASKS.toString(), tas, null);
         }
+    }
+
+    /**
+     * Cleans up records.
+     * @param rc The routing context.
+     */
+    public void cleanUp(final RoutingContext rc) {
+         this.getUtils().execute3(MODULE + "listStatuses", rc,
+            (xusr, body, params, headers, resp) -> {
+                String collection = body.getString("collection");
+                body.remove("collection");
+
+                this.getDbUtils().remove(
+                    collection, body, resp);
+            }, "collection");
     }
 }
