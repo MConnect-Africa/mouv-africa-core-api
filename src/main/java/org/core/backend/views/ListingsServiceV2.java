@@ -50,7 +50,12 @@ public class ListingsServiceV2 extends OrganisationService {
             .handler(this::createListings);
         router.post("/updateListings")
             .handler(this::updateListings);
-
+        router.post("/createAmenities")
+            .handler(this::createAmenities);
+        router.post("/listAmenities")
+            .handler(this::listAmenities);
+        router.post("/updateAmenities")
+            .handler(this::updateAmenities);
 
         // Call parent organization service routes
         this.serOrganisationService(router);
@@ -125,9 +130,11 @@ public class ListingsServiceV2 extends OrganisationService {
                         body.getJsonArray("amenities", new JsonArray()),
                     "amenities", resp);
 
-                    this.validatePremiumArrays(body,
-                        body.getJsonArray("discounts", new JsonArray()),
-                    "discounts", resp);
+                    JsonArray dicounts = body.getJsonArray(
+                        "discounts", new JsonArray());
+                    this.validateDiscounts(dicounts);
+                    this.validatePremiumArrays(body, dicounts,
+                        "discounts", resp);
 
                     this.validatePremiumArrays(body,
                         body.getJsonArray("loadings", new JsonArray()),
@@ -151,6 +158,29 @@ public class ListingsServiceV2 extends OrganisationService {
                 }
         }, "longitude", "latitude", "name", "description", "amount",
             "listingType");
+    }
+
+    /**
+     * Validates the Discounts.
+     * @param discounts The list of dicounts appliable.
+     */
+    private void validateDiscounts(final JsonArray discounts) throws Exception {
+        if (discounts != null && !discounts.isEmpty()) {
+            boolean shouldProceed = true;
+            for (int i = 0; i < discounts.size(); i++) {
+                if (discounts.getJsonObject(i) != null) {
+                    JsonObject discount = discounts.getJsonObject(i);
+                    if (!this.getUtils().isValid(discount, "amount",
+                        "name", "type")) {
+                            shouldProceed = false;
+                    }
+                }
+            }
+            if (!shouldProceed) {
+                throw new Exception("Discounts should have amount, name "
+                    + "and type fields");
+            }
+        }
     }
 
     /**
@@ -296,5 +326,55 @@ public class ListingsServiceV2 extends OrganisationService {
         listing.put("premium", listing.getJsonObject(
                 "premium", new JsonObject())
             .put("basicPremium", amount));
+    }
+
+    /**
+     * Creates the amenities to be added.
+     * @param rc The routing context
+     */
+    @SystemTasks(task = MODULE + "createAmenities")
+    private void createAmenities(final RoutingContext rc) {
+        this.getUtils().execute2(MODULE + "createListingTypes", rc,
+            (xusr, body, params, headers, resp) -> {
+
+                body.put("status", Status.ACTIVE);
+                this.getDbUtils().save(
+                    Collections.AMENITIES.toString(),
+                        body, headers, resp);
+        });
+    }
+
+
+    /**
+     * Creates the amenities to be added.
+     * @param rc The routing context
+     */
+    @SystemTasks(task = MODULE + "listAmenities")
+    private void listAmenities(final RoutingContext rc) {
+        this.getUtils().execute2(MODULE + "listAmenities", rc,
+            (xusr, body, params, headers, resp) -> {
+
+                this.getDbUtils().find(
+                    Collections.AMENITIES.toString(), body, resp);
+        });
+    }
+
+
+    /**
+     * Creates the amenities to be added.
+     * @param rc The routing context
+     */
+    @SystemTasks(task = MODULE + "updateAmenities")
+    private void updateAmenities(final RoutingContext rc) {
+        this.getUtils().execute2(MODULE + "updateAmenities", rc,
+            (xusr, body, params, headers, resp) -> {
+
+                JsonObject qry = new JsonObject()
+                    .put("_id", body.getString("_id"));
+                body.remove("_id");
+
+                this.getDbUtils().findOneAndUpdate(
+                    Collections.AMENITIES.toString(), qry, body, resp);
+        }, "_id", "update");
     }
 }

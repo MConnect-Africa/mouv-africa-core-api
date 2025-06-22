@@ -103,6 +103,20 @@ public enum Collections {
         }
     },
 
+
+    /**
+     * The list of amenities.
+     */
+    AMENITIES {
+        /**
+         * Gets the String version.
+         * @return the string ersion
+         */
+        public String toString() {
+            return "amenities";
+        }
+    },
+
     /**
      * The discounts collection.
      */

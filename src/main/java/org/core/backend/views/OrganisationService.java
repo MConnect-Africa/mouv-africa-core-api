@@ -101,8 +101,8 @@ public class OrganisationService extends AdminService {
                                 // create default rbac tasks
                                 this.createOrganisationDefaultRbacTasks(orgID);
                                     }, fail -> {
-                                       this.logger.error(
-                                        fail.getMessage(), fail);
+                                        this.logger.error(
+                                            fail.getMessage(), fail);
                                     resp.end(this.getUtils().getResponse(
                                         Utils.ERR_502,
                                         fail.getMessage()).encode());
