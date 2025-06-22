@@ -195,13 +195,15 @@ public class OrganisationService extends AdminService {
 
                 JsonObject update = new JsonObject()
                     .put("status", body.getString("status"))
-                    .put("remarks", body.getString("remarks"));
+                    .put("remarks", body.getValue("remarks"));
 
                 this.getUtils().addUserToObject(
                     "approvalBy", xusr, update);
 
+                update.getJsonObject("approvalBy")
+                    .put("remarjs", body.getValue("remarks"));
                 this.getDbUtils().findOneAndUpdate(
-                        Collections.ORGANISATION.toString(),
+                    Collections.ORGANISATION.toString(),
                         qry, update, resp);
             }, "status", "_id", "remarks");
     }
