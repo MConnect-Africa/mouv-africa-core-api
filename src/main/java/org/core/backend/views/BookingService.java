@@ -399,21 +399,15 @@ public class BookingService extends ListingsService {
             .add(new JsonObject()
                 .put("$lookup", lookup))
             .add(new JsonObject()
-                .put("$lookup", new JsonObject()
-                    .put("path", "$listing")
-                    .put("preserveNullAndEmptyArrays", true)))
+                .put("$unwind", "$listing"))
             .add(new JsonObject()
                 .put("$lookup", listingTypeLookUp))
             .add(new JsonObject()
-                .put("$lookup", new JsonObject()
-                    .put("path", "$listingType")
-                    .put("preserveNullAndEmptyArrays", true)))
+                .put("$unwind", "$listingType"))
             .add(new JsonObject()
                 .put("$lookup", clientLookUp))
             .add(new JsonObject()
-                .put("$lookup", new JsonObject()
-                    .put("path", "$client")
-                    .put("preserveNullAndEmptyArrays", true)));
+                .put("$unwind", "$client"));
 
     }
 }
