@@ -66,15 +66,16 @@ public class OrganisationService extends AdminService {
         this.getUtils().execute2(MODULE + "createOrganisation", rc,
                 (xusr, body, params, headers, resp) -> {
 
-                    String orgId = UUID.randomUUID().toString();
+                    String orgId = xusr.getString("organisationId");
                     if (orgId == null || orgId.isEmpty()) {
+                        String orgID = UUID.randomUUID().toString();
                         String userId = this.getUtils().isRole(
                             "superadmin", xusr)
                                 ? body.getString("userId", null)
                                 : xusr.getString("_id");
 
                         this.getUser(userId, founder -> {
-                            body.put("organisationId", orgId)
+                            body.put("organisationId", orgID)
                                 .put("isActive", true);
                             this.getUtils().addUserToObject(
                                 "founder", founder, body);
@@ -87,14 +88,14 @@ public class OrganisationService extends AdminService {
                             this.getDbUtils().save(
                                 Collections.ORGANISATION.toString(),
                                     body, headers, () -> {
-                                        founder.put("organisationId", orgId);
+                                        founder.put("organisationId", orgID);
                                         this.getDbUtils().save(
                                             Collections.USERS.toString(),
                                             founder, headers);
                                         resp.end(this.getUtils().getResponse(
                                                 body).encode());
                                 // create default rbac tasks
-                                this.createOrganisationDefaultRbacTasks(orgId);
+                                this.createOrganisationDefaultRbacTasks(orgID);
                                     }, fail -> {
                                        this.logger.error(
                                         fail.getMessage(), fail);
