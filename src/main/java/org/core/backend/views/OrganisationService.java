@@ -51,7 +51,6 @@ public class OrganisationService extends AdminService {
         router.post("/approveUser")
             .handler(this::approveUser);
 
-
         this.setAdminRoutes(router);
 
     }
@@ -93,7 +92,12 @@ public class OrganisationService extends AdminService {
                                             Collections.USERS.toString(),
                                             founder, headers);
                                         resp.end(this.getUtils().getResponse(
-                                                body).encode());
+                                            body).encode());
+                                        this.getUtils().sendEmailToUser(
+                                            founder, "Your documents are now "
+                                            + "Under Review",
+                                            "documents under review",
+                                        new JsonObject());
                                 // create default rbac tasks
                                 this.createOrganisationDefaultRbacTasks(orgID);
                                     }, fail -> {
@@ -105,10 +109,9 @@ public class OrganisationService extends AdminService {
                                     });
                         }, () -> {
                             resp.end(this.getUtils().getResponse(
-                                    Utils.ERR_503, "User with _id "
-                                            + xusr.getString("_id")
-                                            + " is missing")
-                                    .encode());
+                                Utils.ERR_503, "User with _id "
+                                    + xusr.getString("_id")
+                                        + " is missing").encode());
                         }, resp);
                     } else {
                         resp.end(this.getUtils().getResponse(
@@ -201,11 +204,56 @@ public class OrganisationService extends AdminService {
                     "approvalBy", xusr, update);
 
                 update.getJsonObject("approvalBy")
-                    .put("remarjs", body.getValue("remarks"));
+                    .put("remarks", body.getValue("remarks"));
                 this.getDbUtils().findOneAndUpdate(
                     Collections.ORGANISATION.toString(),
-                        qry, update, resp);
+                        qry, update, res -> {
+                        resp.end(this.getUtils().getResponse(res).encode());
+                        //send email over here
+                        String emailTemplate = "REJECTED"
+                            .equalsIgnoreCase(body.getString("status"))
+                            ? "rejected documents"
+                            : "approved documents";
+
+                        JsonObject q = new JsonObject()
+                            .put("feduid", res.getString("founderfeduid",
+                                res.getString("founderFeduid")));
+                        this.sendEmailToClient(q,
+                            "Your KYCs Have been Reviewed", emailTemplate,
+                            new JsonObject());
+                }, fail -> {
+                    resp.end(this.getUtils().getResponse(
+                        Utils.ERR_502, fail.getMessage()).encode());
+                });
+
             }, "status", "_id", "remarks");
+    }
+
+
+    /**
+     * Sends an email to a user.
+     * @param qry The user to be emailed.
+     * @param subject The email subject.
+     * @param template The email template name.
+     * @param params The parameters to be passed to mailgun.
+     * @param files The files to be attached, if any.
+     */
+    private void sendEmailToClient(final JsonObject qry,
+        final String subject, final String template,
+        final JsonObject params, final String... files) {
+            System.out.println(qry.encode());
+            this.getDbUtils().findOne(Collections.USERS.toString(),
+                qry, res -> {
+
+                if (res != null && !res.isEmpty()) {
+
+                    this.getUtils().sendEmailToUser(
+                        res, subject, template, params);
+                }
+
+            }, fail -> { });
+
+
     }
 
 

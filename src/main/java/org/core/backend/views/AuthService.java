@@ -82,7 +82,13 @@ public class AuthService extends BookingService {
                                     }
                                     this.getDbUtils().save(
                                         Collections.USERS.toString(),
-                                    res, headers, resp);
+                                    res, headers, () -> {
+                                        this.getUtils().sendEmailToUser(res,
+                                            "Welcome To The family",
+                                                "onboarding email",
+                                            new JsonObject());
+
+                                    }, resp);
                             }, resp);
                         }, resp);
                     } else {
@@ -100,6 +106,8 @@ public class AuthService extends BookingService {
                 }
         });
     }
+
+
 
     /**
      * Gets the invitation for the invited user.
