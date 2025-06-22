@@ -5,6 +5,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+import java.util.UUID;
 import org.core.backend.models.Status;
 import org.core.backend.models.Collections;
 import org.slf4j.Logger;
@@ -65,7 +66,7 @@ public class OrganisationService extends AdminService {
         this.getUtils().execute2(MODULE + "createOrganisation", rc,
                 (xusr, body, params, headers, resp) -> {
 
-                    String orgId = xusr.getString("organisationId");
+                    String orgId = UUID.randomUUID().toString();
                     if (orgId == null || orgId.isEmpty()) {
                         String userId = this.getUtils().isRole(
                             "superadmin", xusr)
@@ -82,7 +83,7 @@ public class OrganisationService extends AdminService {
                             this.getUtils().setUserRoles(founder,
                                     body.getString("accountType"));
 
-                            body.put("status", Status.ACTIVE);
+                            body.put("status", Status.PENDING);
                             this.getDbUtils().save(
                                 Collections.ORGANISATION.toString(),
                                     body, headers, () -> {
@@ -238,6 +239,7 @@ public class OrganisationService extends AdminService {
         this.getUtils().execute2(MODULE + "listOrganisations", rc,
             (xusr, body, params, headers, resp) -> {
                 this.getUtils().assignRoleQueryFilters(xusr, body, true);
+                System.out.println(body.encode());
                 this.getDbUtils().find(Collections.ORGANISATION.toString(),
                         body, resp);
             });
