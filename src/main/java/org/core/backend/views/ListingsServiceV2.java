@@ -144,7 +144,7 @@ public class ListingsServiceV2 extends OrganisationService {
                         body.getJsonArray("statutoryPremiums", new JsonArray()),
                     "statutoryPremiums", resp);
 
-                    body.put("status", Status.ACTIVE.name());
+                    body.put("status", Status.PENDING.name());
                     this.createPremiumObj(body, body.getDouble("amount"), resp);
                     body.remove("amount");
 
@@ -208,6 +208,48 @@ public class ListingsServiceV2 extends OrganisationService {
 
                     }, resp);
 
+                } catch (final Exception e) {
+                    this.logger.error(e.getMessage(), e);
+                    resp.end(this.getUtils().getResponse(
+                        Utils.ERR_502, e.getMessage()).encode());
+                }
+
+        }, "_id");
+    }
+
+
+    /**
+     * Creates the listings.
+     * @param rc The routing context
+     */
+    @SystemTasks(task = MODULE + "approveListing")
+    private void approveListing(final RoutingContext rc) {
+        this.getUtils().execute2(MODULE + "approveListing", rc,
+            (xusr, body, params, headers, resp) -> {
+                try {
+                    JsonObject qry = new JsonObject()
+                        .put("_id", body.getString("_id"));
+
+                    JsonObject update = new JsonObject()
+                        .put("status", body.getString("status"))
+                        .put("remarks", body.getValue("remarks"));
+
+                    this.getUtils().addUserToObject(
+                        "approvalBy", xusr, update);
+
+                    update.getJsonObject("approvalBy")
+                        .put("remarks", body.getValue("remarks"));
+                    this.getDbUtils().findOneAndUpdate(
+                        Collections.ORGANISATION.toString(),
+                            qry, update, res -> {
+                            resp.end(this.getUtils().getResponse(res).encode());
+                            //send email over here
+
+                        }, fail -> {
+                            this.logger.error(fail.getMessage(), fail);
+                            resp.end(this.getUtils().getResponse(
+                                Utils.ERR_502, fail.getMessage()).encode());
+                        });
                 } catch (final Exception e) {
                     this.logger.error(e.getMessage(), e);
                     resp.end(this.getUtils().getResponse(
@@ -337,6 +379,7 @@ public class ListingsServiceV2 extends OrganisationService {
         this.getUtils().execute2(MODULE + "createListingTypes", rc,
             (xusr, body, params, headers, resp) -> {
 
+                this.getUtils().putInsertDate(body);
                 body.put("status", Status.ACTIVE);
                 this.getDbUtils().save(
                     Collections.AMENITIES.toString(),
