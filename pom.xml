@@ -127,7 +127,12 @@
         <dependency>
             <groupId>org.utils.backend</groupId>
             <artifactId>laxnit</artifactId>
-            <version>1.1.0.02</version>
+            <version>1.1.0.04</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/io.vertx/vertx-kafka-client -->
+        <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-kafka-client</artifactId>
         </dependency>
         <dependency>
             <groupId>io.vertx</groupId>
@@ -468,7 +473,7 @@
                 </dependency>
               </dependencies>
               <configuration>
-                <!--
+                        <!--
                 <testFailureIgnore>true</testFailureIgnore>
                 -->
                 <excludes>
@@ -519,7 +524,7 @@
 
       <reporting>
             <plugins>
-                <!--
+            <!--
                     mvn javadoc:javadoc
                     mvn javadoc:jar
                     mvn javadoc:aggregate

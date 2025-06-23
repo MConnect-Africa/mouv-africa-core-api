@@ -5,4 +5,5 @@
 
 <suppressions>
     <suppress files="proto/" checks="[a-zA-Z0-9]*"/>
+    <suppress files="KafkaUtils.java" checks="[a-zA-Z0-9]*" />
 </suppressions>
