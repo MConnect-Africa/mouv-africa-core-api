@@ -156,8 +156,7 @@ public class ListingsServiceV2 extends OrganisationService {
                     resp.end(this.getUtils().getResponse(
                         Utils.ERR_502, e.getMessage()).encode());
                 }
-        }, "longitude", "latitude", "name", "description", "amount",
-            "listingType");
+        }, "name", "description", "listingType");
     }
 
     /**
@@ -270,6 +269,9 @@ public class ListingsServiceV2 extends OrganisationService {
         try {
             JsonObject updates = body.copy();
 
+            updates.fieldNames().forEach(key -> {
+                listing.put(key, body.getValue(key));
+            });
             if (updates.containsKey("amenities")) {
                 this.validatePremiumArrays(listing,
                     updates.getJsonArray("amenities", new JsonArray()),
