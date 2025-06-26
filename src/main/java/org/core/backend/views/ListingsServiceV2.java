@@ -48,6 +48,8 @@ public class ListingsServiceV2 extends OrganisationService {
             .handler(this::listListings);
         router.post("/createListings")
             .handler(this::createListings);
+        router.post("/approveListing")
+            .handler(this::approveListing);
         router.post("/updateListings")
             .handler(this::updateListings);
         router.post("/createAmenities")
@@ -105,14 +107,11 @@ public class ListingsServiceV2 extends OrganisationService {
      */
     @SystemTasks(task = MODULE + "listListings")
     private void listListings(final RoutingContext rc) {
-        this.getUtils().execute2(MODULE + "listListings", rc,
+        this.getUtils().execute3(MODULE + "listListings", rc,
             (xusr, body, params, headers, resp) -> {
 
-                this.getUtils().assignRoleQueryFilters(
-                    xusr, body, false);
-
-                this.getDbUtils().find(
-                    Collections.LISTINGS.toString(), body, resp);
+                this.getDbUtils().aggregate(Collections.LISTINGS.toString(),
+                    this.createQueryForListings(body), resp);
         });
     }
 
@@ -168,17 +167,19 @@ public class ListingsServiceV2 extends OrganisationService {
         if (discounts != null && !discounts.isEmpty()) {
             boolean shouldProceed = true;
             for (int i = 0; i < discounts.size(); i++) {
-                if (discounts.getJsonObject(i) != null) {
+                if (discounts.getJsonObject(i) != null
+                    && !discounts.isEmpty()) {
                     JsonObject discount = discounts.getJsonObject(i);
                     if (!this.getUtils().isValid(discount, "amount",
-                        "name", "type")) {
+                        "name", "type", "isWeekendOnly", "isAmount", "days")) {
                             shouldProceed = false;
                     }
                 }
             }
             if (!shouldProceed) {
-                throw new Exception("Discounts should have amount, name "
-                    + "and type fields");
+                throw new Exception("Discounts should have 'amount', 'name', "
+                    + " 'isWeekendOnly', 'isAmount', "
+                    + " 'days' and 'type' fields");
             }
         }
     }
@@ -240,7 +241,7 @@ public class ListingsServiceV2 extends OrganisationService {
                     update.getJsonObject("approvalBy")
                         .put("remarks", body.getValue("remarks"));
                     this.getDbUtils().findOneAndUpdate(
-                        Collections.ORGANISATION.toString(),
+                        Collections.LISTINGS.toString(),
                             qry, update, res -> {
                             resp.end(this.getUtils().getResponse(res).encode());
                             //send email over here
@@ -422,5 +423,31 @@ public class ListingsServiceV2 extends OrganisationService {
                 this.getDbUtils().findOneAndUpdate(
                     Collections.AMENITIES.toString(), qry, body, resp);
         }, "_id", "update");
+    }
+
+    /**
+     * Creates the aggregate query for listing.
+     * @param body The body by the FE
+     * @return pipeline for the query sent
+     */
+    private JsonArray createQueryForListings(
+        final JsonObject body) {
+        this.logger.info("createQueryForListings -> ()");
+        // Apply role-based query filters
+
+        JsonObject listingTypeLookUp = new JsonObject()
+            .put("from", Collections.LISTING_TYPES.toString())
+            .put("localField", "listingType")
+            .put("foreignField", "_id")
+            .put("as", "listingType");
+
+        return new JsonArray()
+            .add(new JsonObject()
+                .put("$match", body))
+            .add(new JsonObject()
+                .put("$lookup", listingTypeLookUp))
+            .add(new JsonObject()
+                .put("$unwind", "$listingType"));
+
     }
 }
