@@ -153,7 +153,8 @@ public class ListingsServiceV2 extends OrganisationService {
                     "statutoryPremiums", resp);
 
                     body.put("status", Status.PENDING.name());
-                    this.createPremiumObj(body, body.getDouble("amount"), resp);
+                    this.createPremiumObj(body,
+                        body.getDouble("amount", Utils.ZERO), resp);
                     body.remove("amount");
 
                     this.getUtils().assignRoleSaveFilters(xusr, body);
