@@ -2,6 +2,8 @@ package  org.core.backend.views;
 
 
 import java.text.SimpleDateFormat;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.TimeZone;
 import org.core.backend.models.Collections;
@@ -93,10 +95,11 @@ public class BookingService extends ListingsService {
                         && this.getUtils().compare(startDate, endDate)) {
 
                         JsonObject query = new JsonObject()
+                            .put("listingId", body.getString("listingId"))
                             .put("endDate", new JsonObject()
                                 .put("$lte", startDate.getTime()))
                             .put("status", Status.ACTIVE.name());
-
+                        System.out.println(query.encode());
                         this.getDbUtils().findOne(
                             Collections.BOOKINGS.toString(), query, res -> {
 
@@ -180,6 +183,88 @@ public class BookingService extends ListingsService {
     }
 
     /**
+     * Apply dicounts if they are required.
+     * @param body The body object
+     * @param booking The booking object
+     * @param listing The listing object
+     * @return The list of applicable discounts
+     */
+    private JsonArray applyDiscountsIfNeedBe(final JsonObject body,
+        final JsonObject booking, final JsonObject listing) {
+
+            JsonArray allDiscounts = listing.getJsonArray(
+                    "discounts", new JsonArray());
+
+            JsonArray result = this.applicableDisounts(allDiscounts, booking);
+            return result == null
+                ? new JsonArray()
+                : result;
+    }
+
+    /**
+     * Checks for all applicable discounts possibly there is.
+     * @param discounts The discounts arrays.
+     * @param booking The booking object
+     * @return A list of applicable discounts.
+     */
+    private JsonArray applicableDisounts(final JsonArray discounts,
+        final JsonObject booking) {
+
+        JsonArray results = new JsonArray();
+        if (discounts != null && !discounts.isEmpty()) {
+
+            for (int i = Utils.ZERO; i < discounts.size(); i++) {
+                JsonObject discount = discounts.getJsonObject(i);
+                if (discount != null && !discount.isEmpty()) {
+                    if (discount.getBoolean("isWeekendOnly")
+                        && this.verifyWeekendDiscount(discount)) {
+                            results.add(discount);
+                    }
+
+                    if (this.verifyConsecutiveDaysDiscount(discount,
+                        booking.getInteger("numberOfDays", Utils.ZERO))) {
+                            results.add(discount);
+                    }
+
+
+                }
+            }
+        }
+        return results;
+    }
+
+    /**
+     * checks if we are eligible for a weekend price.
+     * @param discount The discount object
+     * @return if the discount is viable or not
+     */
+    private boolean verifyWeekendDiscount(final JsonObject discount) {
+        if (discount != null && !discount.isEmpty()) {
+             DayOfWeek day = LocalDate.now().getDayOfWeek();
+            return day == DayOfWeek.SATURDAY || day == DayOfWeek.SUNDAY;
+        }
+        return false;
+    }
+
+    /**
+     * checks if we are eligible for a weekend price.
+     * @param discount The discount object
+     * @param numberOfDays The number of days passed
+     * @return if the discount is viable or not
+     */
+    private boolean verifyConsecutiveDaysDiscount(final JsonObject discount,
+        final int numberOfDays) {
+        if (discount != null && !discount.isEmpty()) {
+            if (discount.containsKey("days")
+                && discount.getInteger("days") != null) {
+                    int expectedDays = discount.getInteger("days");
+                    return expectedDays <= numberOfDays;
+                }
+        }
+        return false;
+    }
+
+    /**
      * Makes a booking for a customer.
      * @param xusr The user object
      * @param booking The booking object we want to save.
@@ -191,7 +276,8 @@ public class BookingService extends ListingsService {
 
             try {
                 JsonObject qry = new JsonObject()
-                    .put("_id", body.getString("listingId"));
+                    .put("_id", body.getString("listingId"))
+                    .put("status", Status.ACTIVE.name());
 
                 this.getDbUtils().findOne(Collections.LISTINGS.toString(),
                     qry, res -> {
@@ -199,7 +285,7 @@ public class BookingService extends ListingsService {
                         if (res == null || res.isEmpty()) {
                             resp.end(this.getUtils().getResponse(
                                 Utils.ERR_505,
-                            "Unit passed does not exist").encode());
+                            "Active Unit passed does not exist").encode());
                         } else {
                             this.makeABooking(
                                 xusr, booking, res, body, resp);
@@ -241,6 +327,7 @@ public class BookingService extends ListingsService {
                         .put("receipt", this.createReceiptForTransaction(
                             xusr, booking, listing, body));
 
+
                     this.getDbUtils().save(Collections.BOOKINGS.toString(),
                         booking, null, () -> {
                             resp.end(this.getUtils().getResponse(
@@ -280,20 +367,26 @@ public class BookingService extends ListingsService {
         // VAT
         // Loading amount
 
+        JsonArray appliedDiscounts =
+            this.applyDiscountsIfNeedBe(body, booking, listing);
+        JsonArray appliedAmenities
+            = body.getJsonArray("amenities", new JsonArray());
         JsonObject premium = listing.getJsonObject(
             "premium", new JsonObject());
-        System.out.println(premium.encode());
-        double basicPremium = premium.getDouble("basicPremium",
-            Utils.ZERO_DOUBLE);
+
+        JsonArray statPremiums = premium.getJsonArray("statutoryPremiums");
+        JsonArray loadingAmounts = premium.getJsonArray("loadings");
+        double basicPremium = premium.getDouble(
+            "basicPremium", Utils.ZERO_DOUBLE);
 
         double totalStatutoryPremiums = this.calculateTaxes(
-            premium.getJsonArray("statutoryPremiums"), ZERO_DOUBLE);
+            statPremiums, basicPremium);
         double totalLoadingAmounts = this.calculateTaxes(
-            premium.getJsonArray("loadings"), ZERO_DOUBLE);
+            loadingAmounts, basicPremium);
         double totalDiscountsAmounts = this.calculateTaxes(
-            premium.getJsonArray("discounts"), ZERO_DOUBLE);
+            appliedDiscounts, basicPremium);
         double totalAmenitiesAmounts = this.calculateTaxes(
-            premium.getJsonArray("amenities"), ZERO_DOUBLE);
+            appliedAmenities, basicPremium);
 
         double amount = basicPremium
             + totalStatutoryPremiums
@@ -305,6 +398,10 @@ public class BookingService extends ListingsService {
             .put("totalStatutoryPremiums", totalStatutoryPremiums)
             .put("totalLoadingAmounts", totalLoadingAmounts)
             .put("totalDiscountsAmounts", totalDiscountsAmounts)
+            .put("appliedAmenities", appliedAmenities)
+            .put("discounts", appliedDiscounts)
+            .put("loadingAmounts", loadingAmounts)
+            .put("statutoryPremiums", totalStatutoryPremiums)
             .put("totalAmenitiesAmounts", totalAmenitiesAmounts)
             .put("amount", amount);
     }
