@@ -178,5 +178,28 @@ public enum Collections {
         public String toString() {
             return "bookings";
         }
+    },
+
+
+    /** reviews. */
+    REVIEWS {
+        /**
+         * Gets the String version.
+         * @return the string ersion
+         */
+        public String toString() {
+            return "reviews";
+        }
+    },
+
+    /** reviews. */
+    FAVOURITES {
+        /**
+         * Gets the String version.
+         * @return the string ersion
+         */
+        public String toString() {
+            return "favourites";
+        }
     }
 }

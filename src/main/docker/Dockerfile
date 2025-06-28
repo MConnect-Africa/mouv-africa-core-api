@@ -1,5 +1,4 @@
 # Docker file build
-
 FROM adoptopenjdk/openjdk14:ubi
 
 # Set environment variables

@@ -11,6 +11,7 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.utils.backend.utils.DBUtils;
+import org.utils.backend.utils.KafkaUtils;
 import org.utils.backend.utils.SystemTasks;
 import org.utils.backend.utils.Utils;
 
@@ -48,6 +49,9 @@ public class BaseService extends AbstractVerticle {
      */
     private Utils utils;
 
+    /** The kafka utility service. */
+    private KafkaUtils kUtils;
+
     /**
      * The module name.
      */
@@ -60,6 +64,30 @@ public class BaseService extends AbstractVerticle {
     public void setDBUtils(final Vertx vertx) {
         this.dbUtils = new DBUtils();
     }
+
+    /** Sets the kafka utils. */
+    public void setKafkaUtils() {
+        JsonObject config = new JsonObject()
+            .put("bootstrap.servers", "localhost:9092")
+            .put("key.deserializer",
+                "org.apache.kafka.common.serialization.StringDeserializer")
+            .put("value.deserializer",
+                "org.apache.kafka.common.serialization.StringDeserializer")
+            .put("group.id", "your-consumer-group")
+            .put("auto.offset.reset", "earliest");
+
+        this.kUtils = new KafkaUtils(
+            this.getVertx(), config);
+    }
+
+    /**
+     * Gets the kafka utils instance.
+     * @return kUtils The kafka utils instance.
+     */
+    public KafkaUtils getKafkaUtils() {
+        return this.kUtils;
+    }
+
 
     /**
      * Gets the database utils instance.

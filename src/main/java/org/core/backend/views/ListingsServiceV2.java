@@ -7,14 +7,14 @@ import io.vertx.core.json.JsonObject;
 import org.core.backend.models.Collections;
 import org.core.backend.models.Status;
 
+import org.utils.backend.utils.SystemTasks;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.utils.backend.utils.Utils;
-import org.utils.backend.utils.SystemTasks;
 
 import io.vertx.core.http.HttpServerResponse;
-
 
 import io.vertx.ext.web.RoutingContext;
 
@@ -48,8 +48,6 @@ public class ListingsServiceV2 extends OrganisationService {
             .handler(this::listListings);
         router.post("/createListings")
             .handler(this::createListings);
-        router.post("/approveListing")
-            .handler(this::approveListing);
         router.post("/updateListings")
             .handler(this::updateListings);
         router.post("/createAmenities")
@@ -58,6 +56,14 @@ public class ListingsServiceV2 extends OrganisationService {
             .handler(this::listAmenities);
         router.post("/updateAmenities")
             .handler(this::updateAmenities);
+        router.post("/addToFavourites")
+            .handler(this::addToFavourites);
+        router.post("/writeReviews")
+            .handler(this::writeReviews);
+        router.post("/listReviews")
+            .handler(this::listReviews);
+        router.post("/listFavourites")
+            .handler(this::listFavourites);
 
         // Call parent organization service routes
         this.serOrganisationService(router);
@@ -107,11 +113,14 @@ public class ListingsServiceV2 extends OrganisationService {
      */
     @SystemTasks(task = MODULE + "listListings")
     private void listListings(final RoutingContext rc) {
-        this.getUtils().execute3(MODULE + "listListings", rc,
+        this.getUtils().execute2(MODULE + "listListings", rc,
             (xusr, body, params, headers, resp) -> {
 
-                this.getDbUtils().aggregate(Collections.LISTINGS.toString(),
-                    this.createQueryForListings(body), resp);
+                this.getUtils().assignRoleQueryFilters(
+                    xusr, body, false);
+
+                this.getDbUtils().find(
+                    Collections.LISTINGS.toString(), body, resp);
         });
     }
 
@@ -144,8 +153,7 @@ public class ListingsServiceV2 extends OrganisationService {
                     "statutoryPremiums", resp);
 
                     body.put("status", Status.PENDING.name());
-                    this.createPremiumObj(body, body.getDouble("amount",
-                        Utils.ZERO_DOUBLE), resp);
+                    this.createPremiumObj(body, body.getDouble("amount"), resp);
                     body.remove("amount");
 
                     this.getUtils().assignRoleSaveFilters(xusr, body);
@@ -156,7 +164,8 @@ public class ListingsServiceV2 extends OrganisationService {
                     resp.end(this.getUtils().getResponse(
                         Utils.ERR_502, e.getMessage()).encode());
                 }
-        }, "name", "description", "listingType");
+        }, "longitude", "latitude", "name", "description", "amount",
+            "listingType");
     }
 
     /**
@@ -167,19 +176,17 @@ public class ListingsServiceV2 extends OrganisationService {
         if (discounts != null && !discounts.isEmpty()) {
             boolean shouldProceed = true;
             for (int i = 0; i < discounts.size(); i++) {
-                if (discounts.getJsonObject(i) != null
-                    && !discounts.isEmpty()) {
+                if (discounts.getJsonObject(i) != null) {
                     JsonObject discount = discounts.getJsonObject(i);
                     if (!this.getUtils().isValid(discount, "amount",
-                        "name", "type", "isWeekendOnly", "isAmount", "days")) {
+                        "name", "type")) {
                             shouldProceed = false;
                     }
                 }
             }
             if (!shouldProceed) {
-                throw new Exception("Discounts should have 'amount', 'name', "
-                    + " 'isWeekendOnly', 'isAmount', "
-                    + " 'days' and 'type' fields");
+                throw new Exception("Discounts should have amount, name "
+                    + "and type fields");
             }
         }
     }
@@ -241,7 +248,7 @@ public class ListingsServiceV2 extends OrganisationService {
                     update.getJsonObject("approvalBy")
                         .put("remarks", body.getValue("remarks"));
                     this.getDbUtils().findOneAndUpdate(
-                        Collections.LISTINGS.toString(),
+                        Collections.ORGANISATION.toString(),
                             qry, update, res -> {
                             resp.end(this.getUtils().getResponse(res).encode());
                             //send email over here
@@ -271,9 +278,6 @@ public class ListingsServiceV2 extends OrganisationService {
         try {
             JsonObject updates = body.copy();
 
-            updates.fieldNames().forEach(key -> {
-                listing.put(key, body.getValue(key));
-            });
             if (updates.containsKey("amenities")) {
                 this.validatePremiumArrays(listing,
                     updates.getJsonArray("amenities", new JsonArray()),
@@ -426,28 +430,60 @@ public class ListingsServiceV2 extends OrganisationService {
     }
 
     /**
-     * Creates the aggregate query for listing.
-     * @param body The body by the FE
-     * @return pipeline for the query sent
+     * Writes reviews.
+     * @param rc the routing context.
      */
-    private JsonArray createQueryForListings(
-        final JsonObject body) {
-        this.logger.info("createQueryForListings -> ()");
-        // Apply role-based query filters
+    @SystemTasks(task = MODULE + "writeReviews")
+    private void writeReviews(final RoutingContext rc) {
+        this.getUtils().execute2(MODULE + "writeReviews", rc,
+            (xusr, body, params, headers, resp) -> {
 
-        JsonObject listingTypeLookUp = new JsonObject()
-            .put("from", Collections.LISTING_TYPES.toString())
-            .put("localField", "listingType")
-            .put("foreignField", "_id")
-            .put("as", "listingType");
+                this.getDbUtils().save(
+                    Collections.REVIEWS.toString(), body, headers, resp);
+        });
+    }
 
-        return new JsonArray()
-            .add(new JsonObject()
-                .put("$match", body))
-            .add(new JsonObject()
-                .put("$lookup", listingTypeLookUp))
-            .add(new JsonObject()
-                .put("$unwind", "$listingType"));
+    /**
+     * Adds To Favourites.
+     * @param rc the routing context.
+     */
+    @SystemTasks(task = MODULE + "addToFavoutites")
+    private void addToFavourites(final RoutingContext rc) {
+        this.getUtils().execute2(MODULE + "addToFavoutites", rc,
+            (xusr, body, params, headers, resp) -> {
 
+                this.getDbUtils().save(
+                    Collections.FAVOURITES.toString(),
+                        body, headers, resp);
+        });
+    }
+
+    /**
+     * Lists reviews.
+     * @param rc the routing context.
+     */
+    @SystemTasks(task = MODULE + "listReviews")
+    private void listReviews(final RoutingContext rc) {
+        this.getUtils().execute2(MODULE + "listReviews", rc,
+            (xusr, body, params, headers, resp) -> {
+
+                this.getDbUtils().find(
+                    Collections.REVIEWS.toString(), body, resp);
+        });
+    }
+
+    /**
+     * Lists the favourites.
+     * @param rc the routing context.
+     */
+    @SystemTasks(task = MODULE + "listFavourites")
+    private void listFavourites(final RoutingContext rc) {
+        this.getUtils().execute2(MODULE + "listFavourites", rc,
+            (xusr, body, params, headers, resp) -> {
+
+                body.put("feduid", xusr.getString("feduid"));
+                this.getDbUtils().find(
+                    Collections.REVIEWS.toString(), body, resp);
+        });
     }
 }

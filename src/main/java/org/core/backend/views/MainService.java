@@ -1,9 +1,17 @@
 package org.core.backend.views;
 
+import io.vertx.core.http.HttpServerOptions;
+import io.vertx.core.http.ServerWebSocket;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.healthchecks.HealthCheckHandler;
+import io.vertx.ext.healthchecks.Status;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.kafka.client.consumer.KafkaConsumerRecord;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.utils.backend.models.Collections;
+// import org.utils.backend.utils.KafkaUtils;
 import org.utils.backend.utils.SystemTasks;
 import org.utils.backend.utils.Utils;
 
@@ -38,7 +46,13 @@ public class MainService extends AuthService {
      * The grpc server port to listen to.
      */
     private int grpcPort = Integer.parseInt(
-            System.getenv("GRPC_PORT"));
+        System.getenv("GRPC_PORT"));
+
+    /**
+     * The grpc server port to listen to.
+     */
+    private int webSocketPort = Integer.parseInt(
+        System.getenv("WEBSOCKET_PORT"));
 
     /**
      * The logger instance that is used to log.
@@ -52,6 +66,11 @@ public class MainService extends AuthService {
     private static final String DB_SCHEDULES = "schedules";
 
     /**
+     * The waiting time in milliseconds.
+     */
+    public static final int WAIT_TIME = 2000;
+
+    /**
      * The main vertx microservice callback.
      */
     @Override
@@ -59,11 +78,16 @@ public class MainService extends AuthService {
         this.logger.info("Start laxnit-auth Service ->");
         try {
             // Start the http server.
-            this.startHttpServer(this.serverPort,
+            this.startHttpServer(this.serverPort, this.webSocketPort,
                 event -> {
                     if (event.failed()) {
                         logger.error("Server start failed!",
                                 event.cause());
+                    }
+                }, wsEcent -> {
+                    if (wsEcent.failed()) {
+                        logger.error("Web socket Server start failed!",
+                            wsEcent.cause());
                     }
                 });
         } catch (Exception e) {
@@ -117,6 +141,157 @@ public class MainService extends AuthService {
         // Sart blocking processes.
         this.startBlockingProcesses();
         // this.startGrpcServer();
+    }
+
+    /**
+     * Start http server.
+     * @param customport A custom server port.
+     * @param custowsmport A custom webserver port.
+     * @param handler The result handler.
+     * @param wshandler The web socket result handler.
+     */
+    protected void startHttpServer(final int customport,
+        final int custowsmport,
+        final Handler<AsyncResult<HttpServer>> handler,
+        final Handler<AsyncResult<HttpServer>> wshandler) {
+
+        this.vertx = Vertx.vertx(new VertxOptions()
+                .setMetricsOptions(new MicrometerMetricsOptions()
+                        .setPrometheusOptions(new VertxPrometheusOptions()
+                                .setEnabled(true))
+                        .setEnabled(true)));
+
+        Router router = Router.router(this.vertx);
+        this.setRoutes(router);
+        this.setDBUtils(this.vertx);
+        this.setUtils(new Utils(() -> {
+        }));
+        this.setKafkaUtils();
+
+        this.vertx.createHttpServer()
+            .requestHandler(router)
+            .listen(customport, handler);
+
+        // Sart blocking processes.
+        this.startBlockingProcesses();
+        // this.startGrpcServer();
+
+        // Health check
+        this.setHealthCheck(router);
+
+        // Start web socket processes.
+        createWebSocket(custowsmport, null, wshandler);
+
+
+        // Start blocking processes.
+        this.startBlockingProcesses();
+
+        // Starts the KAFKA broker.
+        this.startKafkaBroker();
+
+        // Open event bus
+        // this.createEventBus();
+    }
+
+    /** stsrt the kafka broker. */
+    private void startKafkaBroker() {
+        this.getKafkaUtils().initializeProducer()
+            .compose(v -> this.getKafkaUtils().createConsumer("test"))
+            .onSuccess(v -> {
+                this.getKafkaUtils().registerHandler("test", this::testKafka);
+                logger.info("Kafka initialized");
+            })
+        .onFailure(err -> logger.error("Kafka initialization failed", err));
+    }
+
+
+    /**
+     * Sets the system health check.
+     * @param router The router used to set paths.
+     */
+    private void setHealthCheck(final Router router) {
+        HealthCheckHandler health = HealthCheckHandler.create(this.vertx);
+        health.register("ws", WAIT_TIME, f -> f.complete(Status.OK()));
+        health.register("db", WAIT_TIME, f -> {
+            if (this.getDbUtils().getDBClient() == null) {
+                f.fail("MongoClient (mongoClient) is null!");
+            } else {
+                this.getDbUtils().getDBClient().find(
+                    Collections.USERS.toString(),
+                        new JsonObject().put("_id",
+                            UUID.randomUUID().toString()), res -> {
+                            if (res.succeeded()) {
+                                f.complete(Status.OK());
+                            } else {
+                                f.fail(res.cause().getMessage());
+                            }
+                        });
+            }
+        });
+
+        router.get("/health").handler(health);
+
+        HealthCheckHandler healthz = HealthCheckHandler.create(this.vertx);
+        healthz.register("ws", WAIT_TIME,
+            f -> f.complete(Status.OK()));
+
+        router.get("/healthz").handler(healthz);
+    }
+
+    /**
+     * Creates a web socket server.
+     * @param custowsmport The custom port.
+     * @param opts The web server options.
+     * @param handler The web socket result handler.
+     */
+    private void createWebSocket(final int custowsmport,
+        final HttpServerOptions opts,
+        final Handler<AsyncResult<HttpServer>> handler) {
+            if (opts == null) {
+                this.vertx.createHttpServer()
+                    .webSocketHandler(this::makeWsRequest)
+                        .listen(custowsmport, handler);
+            } else {
+                this.vertx.createHttpServer(opts)
+                    .webSocketHandler(this::makeWsRequest)
+                        .listen(custowsmport, handler);
+            }
+    }
+
+    /**
+     * Makes web socket requests.
+     * @param ws The web socket utils.
+     */
+    private void makeWsRequest(final ServerWebSocket ws) {
+        this.logger.info("makeWsRequest(uri = {"
+            + ws.uri()
+            + "}, path = {" + ws.path() + "}) ->");
+        String path = ws.path() == null
+            ? ""
+            : ws.path();
+        if (path.endsWith("testWebSocket")) {
+            this.testWebSocket(ws);
+        } else {
+            ws.writeTextMessage(getUtils().getResponse(
+                Utils.ERR_500, "Unsupported endpoint!").encode());
+            ws.close();
+        }
+    }
+
+
+    /**
+     * Gets the quotes via web socket.
+     * @param ws The web socket utils.
+     */
+    private void testWebSocket(final ServerWebSocket ws) {
+        this.getUtils().execute2(MODULE + "testWebSocket", ws,
+            (xusr, body, headers, params, resp) -> {
+                System.out.println("Def jaaaaaammm ---> ");
+                resp.writeTextMessage(
+                    getUtils().getResponse(body).encode());
+
+                resp.close();
+        });
     }
 
     /**
@@ -266,5 +441,19 @@ public class MainService extends AuthService {
                 this.getDbUtils().find(
                         DB_SCHEDULES, body, resp);
             }, "searchTerm", "fieldsToSearchFor");
+    }
+
+    /**
+     * Test the kafka.
+     * @param record the record being consumed.
+     */
+    private void testKafka(final KafkaConsumerRecord<
+        String, JsonObject> record) {
+        // Your email sending logic
+        System.out.print(record.value());
+
+        // Commit offset after processing
+        // this.getKafkaUtils().commit("user-login")
+        //     .onFailure(err -> logger.error("Failed to commit offset", err));
     }
 }
