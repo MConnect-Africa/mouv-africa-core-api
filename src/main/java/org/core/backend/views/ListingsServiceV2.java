@@ -117,8 +117,9 @@ public class ListingsServiceV2 extends OrganisationService {
             (xusr, body, params, headers, resp) -> {
 
 
-                this.getDbUtils().find(
-                    Collections.LISTINGS.toString(), body, resp);
+                this.getDbUtils().aggregate(
+                    Collections.LISTINGS.toString(),
+                        createAggregateQueryListListings(body), resp);
         });
     }
 
@@ -404,9 +405,8 @@ public class ListingsServiceV2 extends OrganisationService {
         this.getUtils().execute2(MODULE + "listAmenities", rc,
             (xusr, body, params, headers, resp) -> {
 
-                this.getDbUtils().aggregate(
-                    Collections.LISTINGS.toString(),
-                        createAggregateQueryListListings(body), resp);
+                this.getDbUtils().find(
+                    Collections.AMENITIES.toString(), body, resp);
         });
     }
 
