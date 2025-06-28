@@ -113,7 +113,7 @@ public class ListingsServiceV2 extends OrganisationService {
      */
     @SystemTasks(task = MODULE + "listListings")
     private void listListings(final RoutingContext rc) {
-        this.getUtils().execute2(MODULE + "listListings", rc,
+        this.getUtils().execute3(MODULE + "listListings", rc,
             (xusr, body, params, headers, resp) -> {
 
                 this.getUtils().assignRoleQueryFilters(
