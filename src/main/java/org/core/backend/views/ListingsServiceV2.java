@@ -116,8 +116,6 @@ public class ListingsServiceV2 extends OrganisationService {
         this.getUtils().execute3(MODULE + "listListings", rc,
             (xusr, body, params, headers, resp) -> {
 
-                this.getUtils().assignRoleQueryFilters(
-                    xusr, body, false);
 
                 this.getDbUtils().find(
                     Collections.LISTINGS.toString(), body, resp);
@@ -406,8 +404,9 @@ public class ListingsServiceV2 extends OrganisationService {
         this.getUtils().execute2(MODULE + "listAmenities", rc,
             (xusr, body, params, headers, resp) -> {
 
-                this.getDbUtils().find(
-                    Collections.AMENITIES.toString(), body, resp);
+                this.getDbUtils().aggregate(
+                    Collections.LISTINGS.toString(),
+                        createAggregateQueryListListings(body), resp);
         });
     }
 
@@ -486,5 +485,31 @@ public class ListingsServiceV2 extends OrganisationService {
                 this.getDbUtils().find(
                     Collections.REVIEWS.toString(), body, resp);
         });
+    }
+
+
+    /**
+     * Creates the aggregate query for listing.
+     * @param body The body by the FE
+     * @return pipeline for the query sent
+     */
+    private JsonArray createAggregateQueryListListings(final JsonObject body) {
+        this.logger.info("createAggregateQueryListListings -> ()");
+        // Add search functionality for custom fields
+        this.getUtils().addFieldsToSearchQuery(body);
+
+        JsonObject listingTypeLookUp = new JsonObject()
+            .put("from", Collections.LISTING_TYPES.toString())
+            .put("localField", "listingType")
+            .put("foreignField", "_id")
+            .put("as", "listingType");
+
+        return new JsonArray()
+            .add(new JsonObject()
+                .put("$match", body))
+            .add(new JsonObject()
+                .put("$lookup", listingTypeLookUp))
+            .add(new JsonObject()
+                .put("$unwind", "$listingType"));
     }
 }

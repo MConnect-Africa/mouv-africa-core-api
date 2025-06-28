@@ -166,7 +166,7 @@ public class MainService extends AuthService {
         this.setDBUtils(this.vertx);
         this.setUtils(new Utils(() -> {
         }));
-        this.setKafkaUtils();
+        // this.setKafkaUtils();
 
         this.vertx.createHttpServer()
             .requestHandler(router)
@@ -187,7 +187,7 @@ public class MainService extends AuthService {
         this.startBlockingProcesses();
 
         // Starts the KAFKA broker.
-        this.startKafkaBroker();
+        // this.startKafkaBroker();
 
         // Open event bus
         // this.createEventBus();
