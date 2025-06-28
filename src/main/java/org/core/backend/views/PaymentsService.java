@@ -1,7 +1,6 @@
 package org.core.backend.views;
 
 import io.vertx.core.json.JsonObject;
-// import io.vertx.core.Vertx;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

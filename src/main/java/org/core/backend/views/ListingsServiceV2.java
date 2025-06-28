@@ -7,14 +7,14 @@ import io.vertx.core.json.JsonObject;
 import org.core.backend.models.Collections;
 import org.core.backend.models.Status;
 
+import org.utils.backend.utils.SystemTasks;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.utils.backend.utils.Utils;
-import org.utils.backend.utils.SystemTasks;
 
 import io.vertx.core.http.HttpServerResponse;
-
 
 import io.vertx.ext.web.RoutingContext;
 
@@ -56,6 +56,14 @@ public class ListingsServiceV2 extends OrganisationService {
             .handler(this::listAmenities);
         router.post("/updateAmenities")
             .handler(this::updateAmenities);
+        router.post("/addToFavourites")
+            .handler(this::addToFavourites);
+        router.post("/writeReviews")
+            .handler(this::writeReviews);
+        router.post("/listReviews")
+            .handler(this::listReviews);
+        router.post("/listFavourites")
+            .handler(this::listFavourites);
 
         // Call parent organization service routes
         this.serOrganisationService(router);
@@ -419,5 +427,63 @@ public class ListingsServiceV2 extends OrganisationService {
                 this.getDbUtils().findOneAndUpdate(
                     Collections.AMENITIES.toString(), qry, body, resp);
         }, "_id", "update");
+    }
+
+    /**
+     * Writes reviews.
+     * @param rc the routing context.
+     */
+    @SystemTasks(task = MODULE + "writeReviews")
+    private void writeReviews(final RoutingContext rc) {
+        this.getUtils().execute2(MODULE + "writeReviews", rc,
+            (xusr, body, params, headers, resp) -> {
+
+                this.getDbUtils().save(
+                    Collections.REVIEWS.toString(), body, headers, resp);
+        });
+    }
+
+    /**
+     * Adds To Favourites.
+     * @param rc the routing context.
+     */
+    @SystemTasks(task = MODULE + "addToFavoutites")
+    private void addToFavourites(final RoutingContext rc) {
+        this.getUtils().execute2(MODULE + "addToFavoutites", rc,
+            (xusr, body, params, headers, resp) -> {
+
+                this.getDbUtils().save(
+                    Collections.FAVOURITES.toString(),
+                        body, headers, resp);
+        });
+    }
+
+    /**
+     * Lists reviews.
+     * @param rc the routing context.
+     */
+    @SystemTasks(task = MODULE + "listReviews")
+    private void listReviews(final RoutingContext rc) {
+        this.getUtils().execute2(MODULE + "listReviews", rc,
+            (xusr, body, params, headers, resp) -> {
+
+                this.getDbUtils().find(
+                    Collections.REVIEWS.toString(), body, resp);
+        });
+    }
+
+    /**
+     * Lists the favourites.
+     * @param rc the routing context.
+     */
+    @SystemTasks(task = MODULE + "listFavourites")
+    private void listFavourites(final RoutingContext rc) {
+        this.getUtils().execute2(MODULE + "listFavourites", rc,
+            (xusr, body, params, headers, resp) -> {
+
+                body.put("feduid", xusr.getString("feduid"));
+                this.getDbUtils().find(
+                    Collections.REVIEWS.toString(), body, resp);
+        });
     }
 }
