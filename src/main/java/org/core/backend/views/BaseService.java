@@ -11,7 +11,7 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.utils.backend.utils.DBUtils;
-import org.utils.backend.utils.KafkaUtils;
+// import org.utils.backend.utils.KafkaUtils;
 import org.utils.backend.utils.SystemTasks;
 import org.utils.backend.utils.Utils;
 
@@ -49,8 +49,8 @@ public class BaseService extends AbstractVerticle {
      */
     private Utils utils;
 
-    /** The kafka utility service. */
-    private KafkaUtils kUtils;
+    // /** The kafka utility service. */
+    // private KafkaUtils kUtils;
 
     /**
      * The module name.
@@ -65,8 +65,11 @@ public class BaseService extends AbstractVerticle {
         this.dbUtils = new DBUtils();
     }
 
-    /** Sets the kafka utils. */
-    public void setKafkaUtils() {
+    /**
+     * Sets the kafka utils.
+     * @param vertx The vertx instance
+     */
+    public void setKafkaUtils(final Vertx vertx) {
         JsonObject config = new JsonObject()
             .put("bootstrap.servers", "localhost:9092")
             .put("key.deserializer",
@@ -75,18 +78,15 @@ public class BaseService extends AbstractVerticle {
                 "org.apache.kafka.common.serialization.StringDeserializer")
             .put("group.id", "your-consumer-group")
             .put("auto.offset.reset", "earliest");
-
-        this.kUtils = new KafkaUtils(
-            this.getVertx(), config);
     }
 
-    /**
-     * Gets the kafka utils instance.
-     * @return kUtils The kafka utils instance.
-     */
-    public KafkaUtils getKafkaUtils() {
-        return this.kUtils;
-    }
+    // /**
+    //  * Gets the kafka utils instance.
+    //  * @return kUtils The kafka utils instance.
+    //  */
+    // public KafkaUtils getKafkaUtils() {
+    //     return this.kUtils;
+    // }
 
 
     /**
@@ -147,11 +147,11 @@ public class BaseService extends AbstractVerticle {
             (xusr, body, params, headers, resp) -> {
                 try {
                     resp.end(getUtils().getResponse(
-                            listTasks()).encode());
+                        listTasks()).encode());
                 } catch (Exception e) {
                     logger.error(e.getMessage(), e);
                     resp.end(getUtils().getResponse(
-                            Utils.ERR_502, e.getMessage()).encode());
+                        Utils.ERR_502, e.getMessage()).encode());
                 }
             });
     }

@@ -12,7 +12,9 @@ import org.slf4j.LoggerFactory;
 import org.utils.backend.utils.SystemTasks;
 import org.utils.backend.utils.Utils;
 
-
+/**
+ * The admin service.
+ */
 public class AdminService extends RbacService {
 
     /**
@@ -23,7 +25,6 @@ public class AdminService extends RbacService {
 
     /**
      * Sets routes for the http server.
-     *
      * @param router The router used to set paths.
      */
     protected void setAdminRoutes(final Router router) {
@@ -45,7 +46,6 @@ public class AdminService extends RbacService {
 
     /**
      * Create the document types.
-     *
      * @param rc The routing context.
      */
     @SystemTasks(task = MODULE + "createDocumentTypes")
@@ -61,7 +61,6 @@ public class AdminService extends RbacService {
 
     /**
      * Lists the document types.
-     *
      * @param rc The routing context.
      */
     @SystemTasks(task = MODULE + "listDocumentTypes")
@@ -76,7 +75,6 @@ public class AdminService extends RbacService {
 
     /**
      * Adds the new product.
-     *
      * @param rc The rouuting context
      */
     private void addNewProducts(final RoutingContext rc) {
@@ -90,7 +88,6 @@ public class AdminService extends RbacService {
 
     /**
      * Assign Products to an Organisation the new product.
-     *
      * @param rc The rouuting context
      */
     private void assignOrganisationNewProducts(final RoutingContext rc) {
@@ -155,7 +152,6 @@ public class AdminService extends RbacService {
 
     /**
      * Lists the side bar services for organisations.
-     *
      * @param rc The routng context.
      */
     protected void listSideBarServices(final RoutingContext rc) {

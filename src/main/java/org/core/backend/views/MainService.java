@@ -7,6 +7,9 @@ import io.vertx.ext.healthchecks.HealthCheckHandler;
 import io.vertx.ext.healthchecks.Status;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.kafka.client.consumer.KafkaConsumerRecord;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +34,10 @@ import io.vertx.grpc.VertxServerBuilder;
 import io.vertx.micrometer.MicrometerMetricsOptions;
 import io.vertx.micrometer.VertxPrometheusOptions;
 
+import io.vertx.core.CompositeFuture;
+import io.vertx.core.Future;
+
+
 /**
  * The premium service.
  */
@@ -40,7 +47,7 @@ public class MainService extends AuthService {
      * Ther server port to listen to.
      */
     private int serverPort = Integer.parseInt(
-            System.getenv("PORT"));
+        System.getenv("PORT"));
 
     /**
      * The grpc server port to listen to.
@@ -58,7 +65,7 @@ public class MainService extends AuthService {
      * The logger instance that is used to log.
      */
     private Logger logger = LoggerFactory.getLogger(
-            MainService.class.getName());
+        MainService.class.getName());
 
     /**
      * The sms schedules collections.
@@ -132,7 +139,7 @@ public class MainService extends AuthService {
         this.setRoutes(router);
         this.setDBUtils(this.vertx);
         this.setUtils(new Utils(() -> {
-        }));
+        })); //this.vertx);
 
         this.vertx.createHttpServer()
             .requestHandler(router)
@@ -156,17 +163,17 @@ public class MainService extends AuthService {
         final Handler<AsyncResult<HttpServer>> wshandler) {
 
         this.vertx = Vertx.vertx(new VertxOptions()
-                .setMetricsOptions(new MicrometerMetricsOptions()
-                        .setPrometheusOptions(new VertxPrometheusOptions()
-                                .setEnabled(true))
-                        .setEnabled(true)));
+            .setMetricsOptions(new MicrometerMetricsOptions()
+                .setPrometheusOptions(new VertxPrometheusOptions()
+                        .setEnabled(true))
+                .setEnabled(true)));
 
         Router router = Router.router(this.vertx);
         this.setRoutes(router);
         this.setDBUtils(this.vertx);
         this.setUtils(new Utils(() -> {
         }));
-        // this.setKafkaUtils();
+        // this.setKafkaUtils(this.vertx);
 
         this.vertx.createHttpServer()
             .requestHandler(router)
@@ -182,10 +189,6 @@ public class MainService extends AuthService {
         // Start web socket processes.
         createWebSocket(custowsmport, null, wshandler);
 
-
-        // Start blocking processes.
-        this.startBlockingProcesses();
-
         // Starts the KAFKA broker.
         // this.startKafkaBroker();
 
@@ -193,17 +196,79 @@ public class MainService extends AuthService {
         // this.createEventBus();
     }
 
-    /** stsrt the kafka broker. */
-    private void startKafkaBroker() {
-        this.getKafkaUtils().initializeProducer()
-            .compose(v -> this.getKafkaUtils().createConsumer("test"))
-            .onSuccess(v -> {
-                this.getKafkaUtils().registerHandler("test", this::testKafka);
-                logger.info("Kafka initialized");
-            })
-        .onFailure(err -> logger.error("Kafka initialization failed", err));
+    /**
+     * Create sthe list of consumers.
+     * @param topics The topics to send to.
+     * @return a future of type CompositeFuture
+     */
+    private Future<CompositeFuture> createConsumers(final List<String> topics) {
+        List<Future> futures = new ArrayList<>();
+        for (String topic : topics) {
+            futures.add(this.getUtils().createConsumer(topic));
+        }
+        return CompositeFuture.all(futures);
     }
 
+    /** stsrt the kafka broker. */
+    private void startKafkaBroker() {
+        List<String> topics = new ArrayList<>();
+
+        topics.add("test");
+        topics.add("test2");
+        Map<String, Handler<
+            KafkaConsumerRecord<String, JsonObject>>> handlers = Map.of(
+                "test", this::createTestHandler,
+                "test2", this::createTestHandler2
+            );
+
+        this.startKafkaBroker(topics,  handlers);
+    }
+
+    /**
+     * Starts the kafka brokers.
+     * @param consumers The list of consumers.
+     * @param handlers The handlers fields.
+     */
+    private void startKafkaBroker(
+        final List<String> consumers, final Map<String, Handler<
+            KafkaConsumerRecord<String, JsonObject>>> handlers) {
+
+        this.getUtils().initializeProducer()
+            .compose(v -> createConsumers(consumers))
+            .onSuccess(v -> {
+                // Attach handlers per topic
+                handlers.forEach((topic, handler) -> {
+                    this.getUtils().registerHandler(topic, handler);
+                });
+
+                logger.info("Kafka initialized with topics: {}", consumers);
+            })
+            .onFailure(err -> logger.error("Kafka initialization failed", err));
+    }
+
+    /**
+     * Crestes the test handler for kafka.
+     * @param record The record being read.
+     */
+    private void createTestHandler(
+        final KafkaConsumerRecord<String, JsonObject> record) {
+        JsonObject msg = record.value();
+        logger.info("Handling test message 1: {}", msg.encodePrettily());
+
+        // Process...
+    }
+
+    /**
+     * Crestes the test handler for kafka.
+     * @param record The record being read.
+     */
+    private void createTestHandler2(
+        final KafkaConsumerRecord<String, JsonObject> record) {
+        JsonObject msg = record.value();
+        logger.info("Handling test message 2 : {}", msg.encodePrettily());
+
+        // Process...
+    }
 
     /**
      * Sets the system health check.
@@ -453,7 +518,7 @@ public class MainService extends AuthService {
         System.out.print(record.value());
 
         // Commit offset after processing
-        // this.getKafkaUtils().commit("user-login")
+        // this.getUtils().commit("user-login")
         //     .onFailure(err -> logger.error("Failed to commit offset", err));
     }
 }

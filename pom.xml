@@ -20,7 +20,7 @@
         <profile>
             <id>image_version</id>
             <properties>
-              <image.version>${env.GH_VERSION}</image.version>
+                <image.version>${env.GH_VERSION}</image.version>
             </properties>
         </profile>
         <profile>

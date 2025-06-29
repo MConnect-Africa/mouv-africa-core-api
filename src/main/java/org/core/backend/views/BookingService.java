@@ -373,6 +373,7 @@ public class BookingService extends ListingsService {
             = body.getJsonArray("amenities", new JsonArray());
         JsonObject premium = listing.getJsonObject(
             "premium", new JsonObject());
+        int numberOfDays = booking.getInteger("numberOfDays");
 
         JsonArray statPremiums = premium.getJsonArray("statutoryPremiums");
         JsonArray loadingAmounts = premium.getJsonArray("loadings");
@@ -380,13 +381,13 @@ public class BookingService extends ListingsService {
             "basicPremium", Utils.ZERO_DOUBLE);
 
         double totalStatutoryPremiums = this.calculateTaxes(
-            statPremiums, basicPremium);
+            statPremiums, basicPremium, numberOfDays);
         double totalLoadingAmounts = this.calculateTaxes(
-            loadingAmounts, basicPremium);
+            loadingAmounts, basicPremium, numberOfDays);
         double totalDiscountsAmounts = this.calculateTaxes(
-            appliedDiscounts, basicPremium);
+            appliedDiscounts, basicPremium, numberOfDays);
         double totalAmenitiesAmounts = this.calculateTaxes(
-            appliedAmenities, basicPremium);
+            appliedAmenities, basicPremium, numberOfDays);
 
         double amount = basicPremium
             + totalStatutoryPremiums
@@ -394,7 +395,7 @@ public class BookingService extends ListingsService {
             - totalDiscountsAmounts;
 
         return new JsonObject()
-            .put("basicPremium", basicPremium)
+            .put("basicPremium", basicPremium * numberOfDays)
             .put("totalStatutoryPremiums", totalStatutoryPremiums)
             .put("totalLoadingAmounts", totalLoadingAmounts)
             .put("totalDiscountsAmounts", totalDiscountsAmounts)
@@ -410,10 +411,11 @@ public class BookingService extends ListingsService {
      * Calculates the taxes being imposed.
      * @param taxes The taxes to calculate.
      * @param basicPremium The basic premium.
+     * @param numberOfDays The number of days.
      * @return taxes The result of taxes.
      */
     private double calculateTaxes(final JsonArray taxes,
-        final double basicPremium) {
+        final double basicPremium, final double numberOfDays) {
         if (taxes != null) {
 
             double result = Utils.ZERO;
@@ -422,14 +424,21 @@ public class BookingService extends ListingsService {
 
                 if (tax != null && !tax.isEmpty()) {
                     boolean isAmount = tax.getBoolean("isAmount");
+                    boolean isPaidDaily
+                        = tax.getBoolean("isPaidDaily", false);
                     double amount = tax.getDouble("amount", ZERO_DOUBLE);
+                    double resAmount = ZERO_DOUBLE;
                     if (isAmount) {
-                        result += amount;
-                        tax.put("value", amount);
+                        resAmount += amount;
                     } else {
-                        result += (amount * basicPremium);
-                        tax.put("value", ((amount * basicPremium) / HUNDRED));
+                        resAmount += ((amount * basicPremium) / HUNDRED);
                     }
+
+                    if (isPaidDaily) {
+                        resAmount = numberOfDays * resAmount;
+                    }
+
+                    tax.put("value", resAmount);
                 }
             }
             return result;
