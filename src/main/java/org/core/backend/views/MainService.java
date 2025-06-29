@@ -37,7 +37,6 @@ import io.vertx.micrometer.VertxPrometheusOptions;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 
-
 /**
  * The premium service.
  */
@@ -204,7 +203,7 @@ public class MainService extends AuthService {
     private Future<CompositeFuture> createConsumers(final List<String> topics) {
         List<Future> futures = new ArrayList<>();
         for (String topic : topics) {
-            futures.add(this.getUtils().createConsumer(topic));
+            // futures.add(this.getUtils().createConsumer(topic));
         }
         return CompositeFuture.all(futures);
     }
