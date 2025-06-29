@@ -221,30 +221,31 @@ public class MainService extends AuthService {
                 "test2", this::createTestHandler2
             );
 
-        this.startKafkaBroker(topics,  handlers);
+        // this.startKafkaBroker(topics,  handlers);
     }
 
-    /**
-     * Starts the kafka brokers.
-     * @param consumers The list of consumers.
-     * @param handlers The handlers fields.
-     */
-    private void startKafkaBroker(
-        final List<String> consumers, final Map<String, Handler<
-            KafkaConsumerRecord<String, JsonObject>>> handlers) {
+    // /**
+    //  * Starts the kafka brokers.
+    //  * @param consumers The list of consumers.
+    //  * @param handlers The handlers fields.
+    //  */
+    // private void startKafkaBroker(
+    //     final List<String> consumers, final Map<String, Handler<
+    //         KafkaConsumerRecord<String, JsonObject>>> handlers) {
 
-        this.getUtils().initializeProducer()
-            .compose(v -> createConsumers(consumers))
-            .onSuccess(v -> {
-                // Attach handlers per topic
-                handlers.forEach((topic, handler) -> {
-                    this.getUtils().registerHandler(topic, handler);
-                });
+    //     this.getUtils().initializeProducer()
+    //         .compose(v -> createConsumers(consumers))
+    //         .onSuccess(v -> {
+    //             // Attach handlers per topic
+    //             handlers.forEach((topic, handler) -> {
+    //                 this.getUtils().registerHandler(topic, handler);
+    //             });
 
-                logger.info("Kafka initialized with topics: {}", consumers);
-            })
-            .onFailure(err -> logger.error("Kafka initialization failed", err));
-    }
+    //             logger.info("Kafka initialized with topics: {}", consumers);
+    //         })
+    //         .onFailure(err -> logger.error("Kafka initialization failed",
+        //err));
+    // }
 
     /**
      * Crestes the test handler for kafka.

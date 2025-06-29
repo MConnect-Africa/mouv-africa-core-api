@@ -1,6 +1,6 @@
 package org.core.backend.views;
 
-import io.vertx.core.json.JsonObject;
+// import io.vertx.core.json.JsonObject;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,8 +9,8 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 // import org.utils.backend.utils.KafkaUtils;
 
-import io.vertx.core.Future;
-import org.utils.backend.utils.Utils;
+// import io.vertx.core.Future;
+// import org.utils.backend.utils.Utils;
 
 /**
  * The payments Service.
@@ -44,12 +44,12 @@ public class PaymentsService extends BaseService {
      */
     private void testKafkaProducer(final RoutingContext rc) {
 
-        this.getUtils().send("test2", new JsonObject()
-            .put("testing12", "This is a test")
-            .put("testing34", "This is a test 2"));
-        this.getUtils().send("test", new JsonObject()
-            .put("test12", "This is a test")
-            .put("test34", "This is a test 2"));
+        // this.getUtils().send("test2", new JsonObject()
+        //     .put("testing12", "This is a test")
+        //     .put("testing34", "This is a test 2"));
+        // this.getUtils().send("test", new JsonObject()
+        //     .put("test12", "This is a test")
+        //     .put("test34", "This is a test 2"));
         rc.response().end(this.getUtils()
             .getResponse("Done").encode());
 
@@ -71,35 +71,35 @@ public class PaymentsService extends BaseService {
 
     }
 
-    /**
-     * Test kafka consumer.
-     * @param ctx The routing context
-     */
-    private void testKafkaConsumer(final RoutingContext ctx) {
-        this.getUtils().createConsumer("test")
-            .compose(v -> {
-                this.getUtils().registerHandler("test", record -> {
-                    JsonObject response = new JsonObject()
-                        .put("topic", record.topic())
-                        .put("key", record.key())
-                        .put("message", record.value())
-                        .put("partition", record.partition())
-                        .put("offset", record.offset());
+    // /**
+    //  * Test kafka consumer.
+    //  * @param ctx The routing context
+    //  */
+    // private void testKafkaConsumer(final RoutingContext ctx) {
+    //     this.getUtils().createConsumer("test")
+    //         .compose(v -> {
+    //             this.getUtils().registerHandler("test", record -> {
+    //                 JsonObject response = new JsonObject()
+    //                     .put("topic", record.topic())
+    //                     .put("key", record.key())
+    //                     .put("message", record.value())
+    //                     .put("partition", record.partition())
+    //                     .put("offset", record.offset());
 
-                    // Log to console – real HTTP pushback
-                    // needs WebSocket or SSE.
-                    System.out.println("Received message: "
-                        + response.encodePrettily());
-                });
+    //                 // Log to console – real HTTP pushback
+    //                 // needs WebSocket or SSE.
+    //                 System.out.println("Received message: "
+    //                     + response.encodePrettily());
+    //             });
 
-                return Future.succeededFuture();
-            })
-            .onSuccess(v -> ctx.response()
-                .putHeader("Content-Type", "application/json")
-                .end(new JsonObject().put("status",
-                    "consumer registered").encodePrettily()))
-            .onFailure(err -> ctx.response()
-                .setStatusCode(Utils.ERR_500)
-                .end("Failed to consume from topic: " + err.getMessage()));
-    }
+    //             return Future.succeededFuture();
+    //         })
+    //         .onSuccess(v -> ctx.response()
+    //             .putHeader("Content-Type", "application/json")
+    //             .end(new JsonObject().put("status",
+    //                 "consumer registered").encodePrettily()))
+    //         .onFailure(err -> ctx.response()
+    //             .setStatusCode(Utils.ERR_500)
+    //             .end("Failed to consume from topic: " + err.getMessage()));
+    // }
 }
